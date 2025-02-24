@@ -47,10 +47,17 @@ This project provides a Python-based eye-tracking software to analyze recorded v
    ```bash
    python src/calibrate.py
 
-
+6. 
+```bash
 python src/train_model.py
+```
+
+7. 
+```bash
 python src/analyze_video.py
-
+```
+8. (Optional) Show heatmap on screen
+```bash
 python src/visualize.py
-
+```
 

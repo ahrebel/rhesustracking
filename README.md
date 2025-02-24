@@ -49,22 +49,7 @@ pip install -r requirements.txt
 ```
 
 
-### 3. (Optional) Run the Setup Script
-
-- **On macOS/Linux:**
-
-  ```bash
-  bash setup.sh
-  ```
-
-- **On Windows:**
-
-  ```batch
-  setup.bat
-  ```
-
-
-### 4. Prepare Your Data
+### 3. Prepare Your Data
 
 - **Video Files:**  
   Place your trial video files (e.g., `trial1.mp4`) in the `videos/input/` directory.
@@ -76,7 +61,7 @@ pip install -r requirements.txt
   - `y` (vertical coordinate)
 
 
-### 5. Initial Calibration
+### 4. Initial Calibration
 
 Generate the calibration matrix using predefined calibration points:
 
@@ -85,7 +70,7 @@ python src/calibrate.py
 ```
 
 
-### 6. Analyze Videos
+### 5. Analyze Videos
 
 Process the videos and, if available, correlate touch events with gaze data:
 
@@ -96,7 +81,7 @@ python src/analyze_video.py
 Processed output files (CSV/JSON) will be stored in the `output/gaze_data/` folder.
 
 
-### 7. Train the Gaze Mapping (Optional)
+### 6. Train the Gaze Mapping (Optional)
 
 To improve the mapping model using paired data, prepare a CSV file with these columns:
 
@@ -112,7 +97,7 @@ python src/train_gaze_mapping.py --data path/to/your_training_data.csv
 This script computes an updated calibration (gaze mapping) matrix and saves it to `data/trained_model/calibration_matrix.npy`.
 
 
-### 8. Visualize the Results (Optional)
+### 7. Visualize the Results (Optional)
 
 Generate a heatmap to visualize fixation times across the screen:
 
@@ -121,7 +106,7 @@ python src/visualize.py
 ```
 
 
-### 9. Final Verification
+### 8. Final Verification
 
 To confirm that everything is installed correctly, run:
 

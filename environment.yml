@@ -1,9 +1,8 @@
-name: monkey-gaze-tracker
-channels:
-  - conda-forge
-  - defaults
 dependencies:
   - python=3.8
+  - pytables
+  - hdf5
+  - lzo
   - pip
   - pip:
       - deeplabcut
@@ -12,4 +11,3 @@ dependencies:
       - numpy
       - pandas
       - matplotlib
-

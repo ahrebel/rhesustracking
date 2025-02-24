@@ -27,6 +27,7 @@ The system supports two primary modes:
 
 ```bash
 git clone https://github.com/ahrebel/rhesusDLC
+cd rhesusDLC
 ```
 
 

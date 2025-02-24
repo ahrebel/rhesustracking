@@ -1,1 +1,7 @@
+deeplabcut
+opencv-python
+pyyaml
+numpy
+pandas
+matplotlib
 

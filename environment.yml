@@ -4,10 +4,13 @@ channels:
   - defaults
 dependencies:
   - python=3.8
-  - pytables
+  - pytables       # Precompiled PyTables from conda-forge
   - hdf5
   - lzo
-  - lzo2
+  - opencv
+  - numpy
+  - pandas
+  - matplotlib
   - pip
   - pip:
       - deeplabcut
@@ -16,3 +19,17 @@ dependencies:
       - numpy
       - pandas
       - matplotlib
+      - dlclibrary>=0.0.6
+      - filterpy>=1.4.4
+      - ruamel.yaml>=0.15.0
+      - imgaug>=0.4.0
+      - imageio-ffmpeg
+      - numba>=0.54
+      - networkx>=2.6
+      - scikit-image>=0.17
+      - scikit-learn>=1.0
+      - scipy>=1.9
+      - statsmodels>=0.11
+      - torch
+      - tqdm
+      - Pillow>=7.1

@@ -75,7 +75,7 @@ The system operates in two modes:
    ```
    This will compute a new calibration (gaze mapping) matrix and save it to data/trained_model/calibration_matrix.npy
 
-  8. **Visualize Results (Optional)**
+8. **Visualize Results (Optional)**
        To generate a heatmap of gaze times, run:
      ```bash
       python src/visualize.py

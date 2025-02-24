@@ -36,7 +36,7 @@ cd rhesusDLC
 #### **Using Conda (Recommended):**
 
 ```bash
-conda create -n monkey-gaze-tracker -c conda-forge python=3.8 pytables hdf5 lzo opencv numpy pandas matplotlib scikit-learn scikit-image scipy tqdm statsmodels yaml
+conda create -n monkey-gaze-tracker -c conda-forge python=3.8 pytables hdf5 lzo opencv numpy pandas matplotlib scikit-learn scikit-image scipy tqdm statsmodels pyyaml
 conda activate monkey-gaze-tracker
 ```
 

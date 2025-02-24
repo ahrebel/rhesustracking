@@ -1,45 +1,88 @@
-#!/usr/bin/env python
 import cv2
-import yaml
 import numpy as np
+import yaml
+import csv
 import os
 
-def load_calibration_config(config_path="config/calibration_config.yaml"):
-    with open(config_path, "r") as f:
-        config = yaml.safe_load(f)
-    return config
+def load_touch_data(file_path):
+    """
+    Load touch/click data from a CSV file.
+    The CSV is expected to have a header with at least the columns:
+      timestamp,x,y
+    """
+    touch_data = []
+    with open(file_path, "r", newline="") as csvfile:
+        reader = csv.DictReader(csvfile)
+        for row in reader:
+            try:
+                # Parse timestamp as float and coordinates as integers
+                touch_data.append({
+                    "timestamp": float(row["timestamp"]),
+                    "x": int(row["x"]),
+                    "y": int(row["y"])
+                })
+            except Exception as ex:
+                print("Error parsing row:", row, ex)
+    return touch_data
 
-def compute_calibration_matrix(calib_points):
-    # Extract source (eye) and destination (screen) points
-    src_points = []
-    dst_points = []
-    for point in calib_points:
-        eye = point["eye"]
-        screen = point["screen"]
-        src_points.append([eye["x"], eye["y"]])
-        dst_points.append([screen["x"], screen["y"]])
-    src = np.array(src_points, dtype=np.float32)
-    dst = np.array(dst_points, dtype=np.float32)
-    # Compute perspective transform (3x3 matrix)
-    matrix = cv2.getPerspectiveTransform(src, dst)
-    return matrix
+def calibrate(video_path, touch_path):
+    # Load touch data from the CSV file.
+    touches = load_touch_data(touch_path)
+    if len(touches) < 4:
+        print("Not enough touch data points. At least 4 are required.")
+        return None
 
-def save_calibration_matrix(matrix, save_path="data/trained_model/calibration_matrix.npy"):
-    os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    np.save(save_path, matrix)
-    print(f"Calibration matrix saved to {save_path}")
+    # Open the video file.
+    cap = cv2.VideoCapture(video_path)
+    if not cap.isOpened():
+        print("Error opening video file:", video_path)
+        return None
 
-def main():
-    config = load_calibration_config()
-    calib_points = config.get("calibration_points", [])
-    if len(calib_points) < 4:
-        print("Error: Need at least 4 calibration points.")
-        return
-    matrix = compute_calibration_matrix(calib_points)
-    print("Calibration matrix computed:")
-    print(matrix)
-    save_calibration_matrix(matrix)
+    # Read the first frame (or a designated calibration frame)
+    ret, frame = cap.read()
+    if not ret:
+        print("Could not read a frame from the video.")
+        cap.release()
+        return None
+
+    # Define four "raw" calibration points.
+    # (In a real setup these might come from the eye detection or a known target on screen.)
+    h, w = frame.shape[:2]
+    raw_points = np.array([[100, 100],
+                           [w - 100, 100],
+                           [w - 100, h - 100],
+                           [100, h - 100]], dtype=np.float32)
+
+    # Use the first four touch events as the corresponding "screen" calibration points.
+    touch_points = np.array([[touches[i]["x"], touches[i]["y"]] for i in range(4)], dtype=np.float32)
+
+    # Compute the homography that maps raw points to touch (screen) points.
+    H, status = cv2.findHomography(raw_points, touch_points)
+    cap.release()
+    return H
 
 if __name__ == "__main__":
-    main()
+    # Define folder paths (adjust if needed)
+    video_folder = os.path.join("videos", "input")
+    calibration_folder = os.path.join("data", "trained_model")
+    os.makedirs(calibration_folder, exist_ok=True)
 
+    # File names (ensure that 1.mp4 and 1.txt are placed in videos/input)
+    video_file = os.path.join(video_folder, "1.mp4")
+    touch_file = os.path.join(video_folder, "1.txt")
+
+    # Run calibration.
+    H = calibrate(video_file, touch_file)
+    if H is not None:
+        # Save the calibration matrix as a NumPy binary file.
+        calib_npy = os.path.join(calibration_folder, "calibration_matrix.npy")
+        np.save(calib_npy, H)
+        # Also save to a YAML file.
+        calib_yaml = os.path.join(calibration_folder, "calibration.yaml")
+        with open(calib_yaml, "w") as f:
+            yaml.dump({"calibration_matrix": H.tolist()}, f)
+        print("Calibration successful. Matrix saved to:")
+        print("  ", calib_npy)
+        print("  ", calib_yaml)
+    else:
+        print("Calibration failed.")

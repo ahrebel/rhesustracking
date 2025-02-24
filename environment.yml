@@ -7,6 +7,7 @@ dependencies:
   - pytables
   - hdf5
   - lzo
+  - lzo2
   - pip
   - pip:
       - deeplabcut

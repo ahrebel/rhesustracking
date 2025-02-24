@@ -20,7 +20,9 @@ The system operates in two modes:
 ## Setup Instructions
 
 1. **Clone or Download the Repository:**  
-   Place all files into a folder (e.g., `monkey-gaze-tracker`).
+   ```bash
+     git clone https://github.com/ahrebel/rhesusDLC
+     ```
 
 2. **Set Up Your Python Environment:**
    - **Using Conda (recommended):**

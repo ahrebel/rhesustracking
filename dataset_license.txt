@@ -1,1 +1,4 @@
+Dataset License Information:
 
+This project references an open-source dataset (e.g., MacaquePose) used for training the DeepLabCut model.
+Please refer to the original dataset license for full details.

@@ -123,15 +123,7 @@ python src/visualize.py
 
 **Important:** Training the DLC model is separate from the gaze mapping calibration. You must train DLC on labeled video frames showing the monkey’s eye landmarks. Follow these steps:
 
-1. **Create a New DLC Project:**
-
-   ```bash
-   python -m deeplabcut.create_new_project --project MonkeyGaze --experimenter YourName --videos path/to/your_video.mp4 --working_directory path/to/your_project_folder
-   ```
-
-   This creates a project folder (with a configuration file, e.g., `config.yaml`).
-
-2. **Label Frames:**
+1. **Label Frames:**
 
    Open the labeling GUI to manually annotate the eye landmarks on selected frames:
 
@@ -139,7 +131,7 @@ python src/visualize.py
    python -m deeplabcut
    ```
 
-3. **Extract Additional Frames (Optional):**
+2. **Extract Additional Frames (Optional):**
 
    If needed, extract more frames for labeling:
 
@@ -147,7 +139,7 @@ python src/visualize.py
    python -m deeplabcut.extract_frames path/to/config.yaml
    ```
 
-4. **Train the Network:**
+3. **Train the Network:**
 
    Once enough frames are labeled, start training the network:
 
@@ -157,7 +149,7 @@ python src/visualize.py
 
    Adjust training parameters in `config.yaml` as needed.
 
-5. **Evaluate the Model:**
+4. **Evaluate the Model:**
 
    After training, evaluate the network’s performance:
 
@@ -165,7 +157,7 @@ python src/visualize.py
    python -m deeplabcut.evaluate_network path/to/config.yaml
    ```
 
-6. **Analyze New Videos with DLC:**
+5. **Analyze New Videos with DLC:**
 
    When satisfied with performance, use the trained model to analyze new videos:
 

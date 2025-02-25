@@ -7,7 +7,7 @@ import pandas as pd
 import json
 
 # Import DeepLabCut predictor (requires DLC v2.3+)
-from deeplabcut.pose_estimation_tensorflow.predictor import Predictor
+from deeplabcut.pose_estimation_tensorflow.predictor_tensorflow import Predictor
 
 # Load DLC configuration and initialize the predictor.
 # (Make sure the config file and trained model exist in this location.)

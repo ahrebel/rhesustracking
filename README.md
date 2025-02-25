@@ -3,7 +3,8 @@
 
 
 
-**Note:** This repository is a work in progress. The instructions below may need further tuning depending on your data and hardware. The system uses DeepLabCut (DLC) for detecting eye landmarks, calibrates the mapping between raw eye coordinates and screen regions, and can optionally correlate touchscreen events with gaze data.
+**Note:** This repository is a work in progress. The instructions below may need to be altered depending on your data, hardware, and goals. 
+The system uses DeepLabCut (DLC) for detecting eye landmarks, calibrates the mapping between raw eye coordinates and screen regions, and can correlate touchscreen events with gaze data.
 
 
 

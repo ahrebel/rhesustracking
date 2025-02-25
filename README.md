@@ -136,7 +136,7 @@ python src/visualize.py
    Open the labeling GUI to manually annotate the eye landmarks on selected frames:
 
    ```bash
-   python -m deeplabcut.label_frames path/to/config.yaml
+   python -m deeplabcut
    ```
 
 3. **Extract Additional Frames (Optional):**

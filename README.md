@@ -46,6 +46,7 @@ conda create -n monkey-gaze-tracker -c conda-forge python=3.8 pytables hdf5 lzo 
 conda activate monkey-gaze-tracker
 pip install pyyaml tensorflow tensorpack tf-slim
 pip install "deeplabcut[gui,tf]"
+pip install 'deeplabcut[gui]'
 ```
 
 #### Or Using pip with Virtualenv:

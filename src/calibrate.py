@@ -3,7 +3,7 @@ import numpy as np
 import yaml
 import csv
 import os
-from datetime import datetime
+from dateutil import parser  # New import for robust ISO parsing
 
 def load_touch_data(file_path):
     """
@@ -17,8 +17,8 @@ def load_touch_data(file_path):
         reader = csv.DictReader(csvfile)
         for row in reader:
             try:
-                # Convert ISO 8601 timestamp to a float (seconds since epoch)
-                ts = datetime.fromisoformat(row["timestamp"]).timestamp()
+                # Use dateutil.parser.isoparse to parse the ISO timestamp
+                ts = parser.isoparse(row["timestamp"]).timestamp()
                 touch_data.append({
                     "timestamp": ts,
                     "x": int(row["x"]),

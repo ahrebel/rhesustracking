@@ -1,5 +1,9 @@
 # Monkey Gaze Tracker with Touch-Integrated Training
 
+
+** This is an in-progress repo for a rhesus macaque eye tracking software. Please note that it is not finished and will not work as expected. **
+
+
 Monkey Gaze Tracker is a Python-based eye-tracking system that processes videos of a monkey interacting with a touchscreen. The system leverages DeepLabCut (DLC) to detect eye landmarks, maps gaze positions to one of 110 predefined screen sections, and (optionally) correlates touchscreen events with gaze data to refine the mapping model.
 
 The system supports two primary modes:

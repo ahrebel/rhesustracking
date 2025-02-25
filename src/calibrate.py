@@ -3,21 +3,24 @@ import numpy as np
 import yaml
 import csv
 import os
+from datetime import datetime
 
 def load_touch_data(file_path):
     """
     Load touch/click data from a CSV file.
     The CSV is expected to have a header with at least the columns:
       timestamp,x,y
+    The timestamp should be in ISO 8601 format.
     """
     touch_data = []
     with open(file_path, "r", newline="") as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             try:
-                # Parse timestamp as float and coordinates as integers
+                # Convert ISO 8601 timestamp to a float (seconds since epoch)
+                ts = datetime.fromisoformat(row["timestamp"]).timestamp()
                 touch_data.append({
-                    "timestamp": float(row["timestamp"]),
+                    "timestamp": ts,
                     "x": int(row["x"]),
                     "y": int(row["y"])
                 })

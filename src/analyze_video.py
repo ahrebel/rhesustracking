@@ -8,10 +8,37 @@ from utils.config_loader import load_yaml_config
 from utils.gaze_mapping import map_gaze_to_section
 from utils.touch_processing import load_touch_events, correlate_touch_gaze
 
-def load_calibration_matrix(matrix_path="data/trained_model/calibration_matrix.npy"):
-    if not os.path.exists(matrix_path):
-        raise FileNotFoundError(f"Calibration matrix not found at {matrix_path}. Please run calibrate.py first.")
+def load_calibration_matrix(directory="data/trained_model"):
+    """
+    Loads the latest calibration matrix from the specified directory.
+    It searches for files named like "calibration_matrix_<num>.npy" and returns
+    the one with the highest numeric suffix.
+    """
+
+    base_name = "calibration_matrix_"
+    ext = ".npy"
+    candidate_files = []
+    if not os.path.exists(directory):
+        raise FileNotFoundError(f"Directory {directory} does not exist. Please run calibrate.py first.")
+    
+    for f in os.listdir(directory):
+        if f.startswith(base_name) and f.endswith(ext):
+            try:
+                num = int(f[len(base_name):-len(ext)])
+                candidate_files.append((num, f))
+            except ValueError:
+                continue
+
+    if not candidate_files:
+        raise FileNotFoundError(f"No calibration matrix found in {directory}. Please run calibrate.py first.")
+
+    # Sort by numeric suffix and pick the highest (latest) version
+    candidate_files.sort(key=lambda x: x[0], reverse=True)
+    selected_file = candidate_files[0][1]
+    matrix_path = os.path.join(directory, selected_file)
+    print(f"Loading calibration matrix from: {matrix_path}")
     return np.load(matrix_path)
+
 
 def get_eye_coordinates(frame):
     """

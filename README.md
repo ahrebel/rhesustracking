@@ -45,11 +45,9 @@ source venv/bin/activate   # On Windows: venv\Scripts\activate
 Install the necessary Python dependencies:
 
 ```bash
-pip install pyyaml tensorflow tensorpack tf-slim
-pip install sleap cattrs
+pip install -r requirements.txt
 ```
 
-*Note:* The installation of `deeplabcut[gui,tf]` is provided for extra functionality if you ever decide to compare or integrate DLC features. In this version, you will primarily use SLEAP for eye detection.
 
 ### 4. Prepare Your Data
 

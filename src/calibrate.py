@@ -1,51 +1,46 @@
-# calibrate.py
-
-import cv2
-import argparse
 import numpy as np
-from deep_pose_estimation import estimate_pose
+import cv2
+import yaml
 
-def calibrate_video(video_path, output_file):
-    cap = cv2.VideoCapture(video_path)
-    if not cap.isOpened():
-        print(f"Error opening video file {video_path}")
-        return
+def load_touch_events(touch_file):
+    """
+    Load touch events from a CSV or TXT file.
+    Expects a header line: timestamp,x,y
+    Returns a list of (x, y) coordinates.
+    """
+    events = []
+    with open(touch_file, 'r') as f:
+        lines = f.readlines()[1:]  # Skip header
+        for line in lines:
+            parts = line.strip().split(',')
+            if len(parts) >= 3:
+                x = float(parts[1])
+                y = float(parts[2])
+                events.append((x, y))
+    return events
 
-    frame_count = 0
-    all_keypoints = []
-
-    while True:
-        ret, frame = cap.read()
-        if not ret:
-            break
-
-        frame_count += 1
-
-        # Process every 30th frame for calibration
-        if frame_count % 30 == 0:
-            keypoints = estimate_pose(frame)
-            all_keypoints.append(keypoints)
-            print(f"Frame {frame_count}: Detected keypoints: {keypoints}")
-
-            # Optional: display the frame with keypoints drawn
-            for (x, y) in keypoints:
-                cv2.circle(frame, (int(x), int(y)), 3, (0, 255, 0), -1)
-            cv2.imshow("Calibration", frame)
-            if cv2.waitKey(1) & 0xFF == ord("q"):
-                break
-
-    cap.release()
-    cv2.destroyAllWindows()
-
-    # Save the collected keypoints for further calibration work
-    np.save(output_file, all_keypoints)
-    print(f"Calibration data saved to {output_file}")
+def calibrate(eye_points, touch_points):
+    """
+    Compute a homography matrix from raw eye points to touch (screen) points.
+    """
+    eye_pts = np.array(eye_points, dtype=np.float32)
+    touch_pts = np.array(touch_points, dtype=np.float32)
+    H, status = cv2.findHomography(eye_pts, touch_pts, cv2.RANSAC)
+    return H
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Calibrate video using DeepPoseKit.")
-    parser.add_argument("video", help="Path to the calibration video file.")
-    parser.add_argument("--output", default="calibration_data.npy",
-                        help="Output file for calibration data.")
-    args = parser.parse_args()
-
-    calibrate_video(args.video, args.output)
+    # Example: use the first 4 points from a touch file (e.g., videos/input/1.txt)
+    touch_file = 'videos/input/1.txt'
+    touch_points = load_touch_events(touch_file)[:4]
+    
+    # For demonstration, assume these are the corresponding eye points.
+    eye_points = [(100, 100), (200, 100), (200, 200), (100, 200)]
+    
+    H = calibrate(eye_points, touch_points)
+    print("Calibration Homography Matrix:")
+    print(H)
+    
+    # Save the calibration matrix.
+    np.save('data/trained_model/calibration_matrix_1.npy', H)
+    with open('data/trained_model/calibration_1.yaml', 'w') as f:
+        yaml.dump({'homography': H.tolist()}, f)

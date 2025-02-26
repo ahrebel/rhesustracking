@@ -1,6 +1,9 @@
 # Rhesus Macaque Gaze Tracker (DeepLabCut Edition)
 
-This repository implements an eye–tracking system for Rhesus macaques interacting with a touchscreen using **DeepLabCut (DLC)** for eye–landmark detection. DeepLabCut provides an intuitive GUI for labeling, training, and analysis. Once a DLC model is trained, it is used to extract eye coordinates from each video frame. These coordinates are then mapped to screen coordinates through calibration, enabling detailed analysis of gaze and fixation patterns.
+![20250225_2225_Loop Video_loop_01jn04jm63fed9tg3rtbw2zj28](https://github.com/user-attachments/assets/99363f7e-ad5d-4410-8288-799d91d39893)
+
+
+This repo creates an eye–tracking software for Rhesus macaques. It is designed to be used for monkeys interacting with a touchscreen using **DeepLabCut (DLC)** for eye–landmark detection. DeepLabCut provides an intuitive GUI for labeling, training, and analysis. Once the DLC model is trained, it can be used to extract eye coordinates from each video frame. These coordinates are then mapped to screen coordinates through calibration which allows for detailed analysis of gaze and fixation patterns and durations.
 
 > **Key Features:**
 > - **Offline Video Processing:** Process pre–recorded trial videos for analysis.

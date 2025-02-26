@@ -17,7 +17,7 @@ cattrs
 psutil
 python-rapidjson
 qtpy
-PySide6
+PyQt5
 jsmin
 albumentations
 jsonpickle

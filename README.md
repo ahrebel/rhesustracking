@@ -46,7 +46,6 @@ Install the necessary Python dependencies:
 
 ```bash
 pip install pyyaml tensorflow tensorpack tf-slim sleap
-pip install "deeplabcut[gui,tf]"
 ```
 
 *Note:* The installation of `deeplabcut[gui,tf]` is provided for extra functionality if you ever decide to compare or integrate DLC features. In this version, you will primarily use SLEAP for eye detection.

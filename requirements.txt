@@ -17,7 +17,6 @@ cattrs
 psutil
 python-rapidjson
 qtpy
-PyQt5
 PySide2
 jsmin
 albumentations

@@ -20,8 +20,8 @@ This repository implements an eye-tracking system for Rhesus macaques interactin
 Open your terminal and run:
 
 ```bash
-git clone https://github.com/ahrebel/rhesusDLC.git
-cd rhesusDLC
+git clone https://github.com/ahrebel/rhesustracking.git
+cd rhesustracking
 ```
 
 ### 2. Create and Activate Your Python Environment

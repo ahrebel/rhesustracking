@@ -47,7 +47,7 @@ Install the necessary Python dependencies:
 ```bash
 pip install -r requirements.txt
 pip install pyyaml tensorflow tensorpack tf-slim sleap
-pip install sleap cattrs psutil python-rapidjson qtpy PyQt5 PySide6 jsmin albumentations jsonpickle zmq rich pykalman seaborn
+pip install sleap cattrs psutil python-rapidjson qtpy PyQt5 PySide6 jsmin albumentations jsonpickle zmq rich pykalman seaborn ndx_pose
 ```
 
 

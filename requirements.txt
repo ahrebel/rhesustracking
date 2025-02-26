@@ -9,10 +9,9 @@ scipy==1.10.1
 tqdm==4.67.1
 statsmodels==0.14.1
 sleap==1.4.0
-tensorflow
+tensorflow-macos==2.9.2
 tensorpack
 tf-slim
-sleap
 cattrs
 psutil
 python-rapidjson

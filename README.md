@@ -1,19 +1,34 @@
 # Rhesus Macaque Gaze Tracker (DeepLabCut Edition)
 
-This repository implements an eye–tracking system for Rhesus macaques interacting with a touchscreen using **DeepLabCut (DLC)** for eye–landmark detection. DeepLabCut provides a user–friendly GUI for labeling, training, and analysis. Once trained, the model is used to extract eye coordinates from video frames, which are then mapped to screen coordinates via calibration.
+This repository implements an eye–tracking system for Rhesus macaques interacting with a touchscreen using **DeepLabCut (DLC)** for eye–landmark detection. DeepLabCut provides an intuitive GUI for labeling, training, and analysis. Once a DLC model is trained, it is used to extract eye coordinates from each video frame. These coordinates are then mapped to screen coordinates through calibration, enabling detailed analysis of gaze and fixation patterns.
 
 > **Key Features:**
-> - **Offline Video Processing:** Analyze pre–recorded trial videos.
-> - **DeepLabCut Integration:** Use a trained DLC model for eye landmark detection.
-> - **Touch Event Correlation:** Align touch event logs (CSV/TXT) with gaze data.
-> - **Gaze Mapping & Calibration:** Compute a calibration (homography) matrix to map raw eye coordinates to screen coordinates.
-> - **Optional Gaze Mapping Training:** Fine–tune the mapping model using paired data.
-> - **Visualization:** Generate plots or heatmaps of gaze points.
-> - **Cross–Platform:** Designed for macOS and Windows (optimized for CPU–only use).
+> - **Offline Video Processing:** Process pre–recorded trial videos for analysis.
+> - **DeepLabCut Integration:** Leverage a trained DLC model to detect eye landmarks with a user-friendly GUI.
+> - **Touch Event Correlation:** Synchronize touch event logs (CSV/TXT) with gaze data to correlate screen interactions.
+> - **Gaze Mapping & Calibration:** Compute a calibration (homography) matrix to accurately map raw eye coordinates to screen coordinates.
+> - **Optional Gaze Mapping Training:** Improve mapping accuracy by fine–tuning the calibration model with paired training data.
+> - **Visualization:** Generate plots, heatmaps, and other summaries to visualize gaze distribution.
+> - **Cross–Platform:** Designed to run on macOS and Windows systems with CPU–only setups.
 
 ---
 
-## Usage Instructions
+## Table of Contents
+
+1. [Installation and Setup](#installation-and-setup)
+2. [Data Preparation](#data-preparation)
+3. [DeepLabCut Model Training](#deeplabcut-model-training)
+4. [Integration & Eye Detection](#integration--eye-detection)
+5. [Calibration](#calibration)
+6. [Video Analysis](#video-analysis)
+7. [Optional: Fine–Tuning Gaze Mapping](#optional-fine-tuning-gaze-mapping)
+8. [Visualization](#visualization)
+9. [Final Verification](#final-verification)
+10. [Troubleshooting](#troubleshooting)
+
+---
+
+## Installation and Setup
 
 ### 1. Clone the Repository
 
@@ -28,6 +43,8 @@ cd rhesustracking
 
 #### Using Conda (Recommended):
 
+We recommend using Conda to manage dependencies. Run:
+
 ```bash
 conda create -n monkey-gaze-tracker -c conda-forge python=3.8 pytables hdf5 lzo opencv numpy pandas matplotlib scikit-learn scikit-image scipy tqdm statsmodels
 conda activate monkey-gaze-tracker
@@ -35,114 +52,194 @@ conda activate monkey-gaze-tracker
 
 #### Alternatively, Using pip with a Virtual Environment:
 
+If you prefer using pip:
+
 ```bash
 python -m venv venv
-source venv/bin/activate   # On Windows: venv\Scripts\activate
+source venv/bin/activate   # On Windows use: venv\Scripts\activate
 ```
 
 ### 3. Install Required Packages
 
-Install the dependencies (including DeepLabCut):
+Install the necessary packages including DeepLabCut by running:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Prepare Your Data
+> **Note:**  
+> DeepLabCut may install additional dependencies during its setup. If you experience issues, try installing DeepLabCut separately:
+> ```bash
+> pip install deeplabcut
+> ```
 
-- **Video Files:**  
-  Place your trial video files (e.g., `1.mp4`, `2.mp4`, etc.) into a folder (for example, `videos/input/`).
+---
 
-- **Touch Event Files:**  
-  For each video, create a corresponding touch event file (e.g., `1.txt` or `1.csv`) in CSV format with a header:
-  ```
+## Data Preparation
+
+### Video Files
+
+- **Input Videos:**  
+  Place your trial video files (e.g., `1.mp4`, `2.mp4`, etc.) in a designated folder (for example, `videos/input/`).
+
+### Touch Event Files
+
+- **Touch Logs:**  
+  For each video, create a corresponding touch event file (e.g., `1.txt` or `1.csv`) formatted as CSV with a header:
+  ```csv
   timestamp,x,y
   ```
-  Sample content:
-  ```
+  **Sample Content:**
+  ```csv
   2025-02-24T18:41:57.2864969-05:00,16,15
   2025-02-24T18:41:58.6795674-05:00,34,25
   ```
+  Make sure timestamps are in ISO 8601 format.
 
-### 5. Train Your DLC Model
+---
 
-1. **Launch the DLC GUI:**  
-   After installing, start the DLC GUI with:
-   ```bash
-   python -m deeplabcut
-   ```
-2. **Create a New Project:**  
-   In the GUI, create a new project by specifying your project name, your name, the video(s) to be analyzed, and the list of body parts (for example, define one keypoint such as `eye` or `pupil_center`).
-3. **Label Frames:**  
-   Use the GUI to label the eye landmark on a diverse set of frames.
-4. **Train the Network:**  
-   Use the **“Train Network”** option in the GUI.  
-   *Tip:* For CPU–only systems, edit your project’s `config.yaml` and change the network type from `resnet_50` to a lighter option (e.g., `mobilenet_v2_1.0`) for faster training/inference.
-5. **Evaluate the Network:**  
-   Once training is complete, evaluate the network to ensure detection accuracy.
+## DeepLabCut Model Training
 
-### 6. Update the Eye Detection Function
+Accurate eye landmark detection is essential. Follow these steps to create and train your DLC model:
 
-Update the eye detection function in `src/detect_eye.py` so that it:
-- Loads your trained DLC model (via your project config).
+### 1. Launch the DLC GUI
+
+Start the DeepLabCut GUI by running:
+
+```bash
+python -m deeplabcut
+```
+
+### 2. Create a New Project
+
+- In the GUI, select **"Create New Project"**.
+- Enter your project name, your name, and add the video(s) you wish to analyze.
+- Define the body parts to label (e.g., a single keypoint such as `eye` or `pupil_center`).
+
+### 3. Label Frames
+
+- Use the DLC GUI to carefully label the eye landmark on a representative set of frames.
+- Aim for diversity in your frame selection to improve model robustness.
+
+### 4. Train the Network
+
+- After labeling, choose the **“Train Network”** option.
+- *Tip for CPU–only systems:* Edit your project’s `config.yaml` file to change the network architecture (e.g., from `resnet_50` to a lighter model like `mobilenet_v2_1.0`) to reduce training time and computational load.
+- Monitor the training progress until completion.
+
+### 5. Evaluate the Model
+
+- Use the **“Evaluate Network”** option in the GUI to assess detection accuracy.
+- If necessary, refine your labels and retrain.
+
+---
+
+## Integration & Eye Detection
+
+### Update the Eye Detection Function
+
+Modify the function in `src/detect_eye.py` so that it:
+- Loads your trained DLC model using your project configuration.
 - Processes each video frame to detect the eye landmark.
-- Returns the (x, y) coordinate for that landmark.
+- Returns the (x, y) coordinates for the detected landmark.
 
-### 7. Calibration
+Ensure the updated function correctly integrates with the rest of the gaze tracking pipeline.
 
-Run the calibration script to compute the homography (calibration) matrix. This script uses the first four touch events from each touch event file to compute the mapping from raw eye coordinates to screen coordinates.
+---
 
-```bash
-python src/calibrate.py
-```
+## Calibration
 
-Calibration files (e.g., `calibration_matrix_1.npy` and `calibration_1.yaml`) will be saved in the `data/trained_model/` folder.
+### Running Calibration
 
-### 8. Analyze Videos
+To map raw eye coordinates to screen coordinates, you need a calibration step:
 
-Once calibration is complete and your DLC-based eye detection is working, run the analysis script. This script:
-- Loads each video (and corresponding touch event file, if available).
-- Uses the updated eye detection function (with DLC) to extract eye coordinates.
-- Applies the calibration matrix to map these coordinates to screen coordinates.
-- Divides the screen into predefined regions (e.g., 110 regions) and computes the total time spent fixating in each region.
-- Saves the output results (e.g., CSV and JSON) to the `data/analysis_output/` directory.
+1. **Run Calibration Script:**  
+   Execute the calibration script by running:
+   ```bash
+   python src/calibrate.py
+   ```
+2. **How It Works:**  
+   - The script reads the first four touch events from each touch event file.
+   - It computes a homography matrix (calibration matrix) that maps raw eye coordinates to the actual screen coordinates.
+3. **Output:**  
+   Calibration files (e.g., `calibration_matrix_1.npy` and `calibration_1.yaml`) will be saved in the `data/trained_model/` folder.
 
-Run the analysis with:
+---
 
-```bash
-python src/analyze_video.py
-```
+## Video Analysis
 
-### 9. (Optional) Fine-Tune the Gaze Mapping
+### Analyzing Videos
 
-If you have additional paired training data (with columns such as `raw_x, raw_y, touch_x, touch_y`), you can improve the gaze mapping by running:
+Once the eye detection function is updated and calibration is complete, analyze your videos:
 
-```bash
-python src/train_gaze_mapping.py --data path/to/your_training_data.csv
-```
+1. **Run Analysis Script:**  
+   Execute:
+   ```bash
+   python src/analyze_video.py
+   ```
+2. **Processing Details:**  
+   - The script processes each video along with its corresponding touch event file.
+   - It applies the updated eye detection (using your DLC model) to extract eye coordinates.
+   - The calibration matrix is applied to translate raw coordinates to screen positions.
+   - The screen is divided into predefined regions (e.g., 110 regions) to compute fixation times.
+3. **Output:**  
+   Results are saved in the `data/analysis_output/` directory in CSV and JSON formats.
 
-This will update the calibration (gaze mapping) model and save the refined matrix to `data/trained_model/`.
+---
 
-### 10. (Optional) Visualize Gaze Data
+## Optional: Fine–Tuning Gaze Mapping
 
-To generate plots or heatmaps of the gaze points, run the visualization script:
+If you have additional training data with paired information (`raw_x, raw_y, touch_x, touch_y`), you can further refine the gaze mapping:
 
-```bash
-python src/visualize.py --csv path/to/your_gaze_data.csv
-```
+1. **Run Gaze Mapping Training Script:**
+   ```bash
+   python src/train_gaze_mapping.py --data path/to/your_training_data.csv
+   ```
+2. **Result:**  
+   This updates the calibration (gaze mapping) model and saves the refined calibration matrix to the `data/trained_model/` folder.
 
-### Final Verification
+---
 
-After installation and setup, run the following command to verify that everything is correctly installed:
+## Visualization
+
+Generate plots or heatmaps to visualize fixation data:
+
+1. **Run the Visualization Script:**
+   ```bash
+   python src/visualize.py --csv path/to/your_gaze_data.csv
+   ```
+2. **Output:**  
+   Visualizations (such as heatmaps or summary plots) will be generated to help interpret the fixation distribution across the screen.
+
+---
+
+## Final Verification
+
+After installation and setup, verify that all components are installed correctly by running:
 
 ```bash
 python -c "import tables, deeplabcut; print('Installation successful')"
 ```
 
-You should see:
+You should see the following output:
 
 ```
 Installation successful
 ```
+
+---
+
+## Troubleshooting
+
+- **DeepLabCut Model Issues:**  
+  Ensure that the DLC model path in your configuration is correct and that the model has been properly trained.
+- **Calibration Errors:**  
+  Verify that your touch event files are formatted correctly and share the same base name as their corresponding video files.
+- **Performance Problems:**  
+  For CPU–only systems, consider reducing the video resolution or switching to a lighter network architecture (e.g., `mobilenet_v2`) in your DLC config.
+- **Dependency Conflicts:**  
+  If you run into package conflicts, double-check the package versions in `requirements.txt` and install DeepLabCut last to allow it to resolve its own dependencies.
+
+---
 
 Happy tracking!

@@ -47,7 +47,8 @@ cd rhesustracking
 
 #### Using Conda (Recommended):
 
-We recommend using Conda to manage dependencies. Ensure you have Miniconda installed first.
+We recommend using Conda to manage dependencies. Ensure you have Miniconda installed first. Visit the link below to install:
+https://www.anaconda.com/download/
 
 Run:
 

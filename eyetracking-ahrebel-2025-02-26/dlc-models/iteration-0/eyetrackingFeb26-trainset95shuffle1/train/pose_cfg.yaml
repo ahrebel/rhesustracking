@@ -7,7 +7,7 @@ identity:
 
     # Project path (change when moving around)
 project_path: 
-  /Users/anthonyhrebello/rhesustracking/eyetracking-ahrebel-2025-02-26/dlc-models/iteration-0/eyetrackingFeb26-trainset95shuffle1/train
+  /Users/anthonyrebello/rhesustracking/eyetracking-ahrebel-2025-02-26/dlc-models/iteration-0/eyetrackingFeb26-trainset95shuffle1/train
 
     # Annotation data set configuration (and individual video cropping parameters)
 video_sets:
@@ -82,7 +82,7 @@ decay_steps: 30000
 display_iters: 1000
 global_scale: 0.8
 init_weights: 
-  /opt/miniconda3/envs/monkey-gaze-tracker/lib/python3.8/site-packages/deeplabcut/pose_estimation_tensorflow/models/pretrained/resnet_v1_50.ckpt
+  /opt/miniconda3/envs/monkey-gaze-tracker/lib/python3.8/site-packages/deeplabcut/pose_estimation_tensorflow/models/pretrained/mobilenet_v2_1.0_224.ckpt
 intermediate_supervision: false
 intermediate_supervision_layer: 12
 location_refinement: true
@@ -105,7 +105,7 @@ multi_step:
   - 730000
 - - 0.001
   - 1030000
-net_type: resnet_50
+net_type: mobilenet_v2_1.0
 num_joints: 4
 pairwise_huber_loss: false
 pairwise_predict: false

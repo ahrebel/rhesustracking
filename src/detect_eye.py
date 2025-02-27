@@ -6,7 +6,7 @@ import pandas as pd
 
 # Path to your DeepLabCut project config file.
 # Update this path to point to your DLC project configuration.
-PROJECT_CONFIG = '/Users/anthonyhrebello/rhesustracking/eyetracking-ahrebel-2025-02-26/dlc-models/iteration-0/eyetrackingFeb26-trainset95shuffle1/train/pose_cfg.yaml'
+PROJECT_CONFIG = '/Users/anthonyrebello/rhesustracking/eyetracking-ahrebel-2025-02-26/config.yaml'
 
 def detect_eye(frame, project_config=PROJECT_CONFIG, keypoint='eye'):
     """

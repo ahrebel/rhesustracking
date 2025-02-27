@@ -6,7 +6,7 @@ multianimalproject: false
 identity:
 
     # Project path (change when moving around)
-project_path: /Users/anthonyhrebello/rhesustracking/eyetracking-ahrebel-2025-02-26
+project_path: /Users/anthonyrebello/rhesustracking/eyetracking-ahrebel-2025-02-26
 
     # Annotation data set configuration (and individual video cropping parameters)
 video_sets:
@@ -27,16 +27,22 @@ bodyparts:
     # Fraction of video to start/stop when extracting frames for labeling/refinement
 
     # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
+
+    # Fraction of video to start/stop when extracting frames for labeling/refinement
 start: 0
 stop: 1
 numframes2pick: 20
 
     # Plotting configuration
-skeleton:
-- - bodypart1
-  - bodypart2
-- - objectA
-  - bodypart3
+skeleton: []
 skeleton_color: black
 pcutoff: 0.6
 dotsize: 12
@@ -47,7 +53,7 @@ colormap: rainbow
 TrainingFraction:
 - 0.95
 iteration: 0
-default_net_type: resnet_50
+default_net_type: mobilenet_v2_1.0
 default_augmenter: default
 snapshotindex: -1
 batch_size: 8

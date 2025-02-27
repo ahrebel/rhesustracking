@@ -8,16 +8,17 @@ from detect_eye import detect_eye
 def load_calibration_matrix(calibration_file='data/trained_model/calibration_matrix_1.npy'):
     return np.load(calibration_file)
 
-def analyze_video(video_path, calibration_matrix_file='data/trained_model/calibration_matrix_1.npy'):
+def analyze_video(video_path, calibration_matrix_file='data/trained_model/calibration_matrix_1.npy', keypoint='left_pupil'):
     """
-    Process the video frame-by-frame, detect the eye coordinates, apply calibration,
-    and save the mapped gaze points to a CSV file.
+    Processes a video frame-by-frame, uses the DLC model to detect the specified keypoint,
+    applies a calibration matrix to map the coordinates, and saves the gaze points to a CSV.
     """
-    # Load the calibration matrix.
+    # Load calibration matrix.
     H = load_calibration_matrix(calibration_matrix_file)
     
     cap = cv2.VideoCapture(video_path)
     gaze_points = []
+    frame_idx = 0
     
     while cap.isOpened():
         ret, frame = cap.read()
@@ -25,17 +26,19 @@ def analyze_video(video_path, calibration_matrix_file='data/trained_model/calibr
             break
         
         try:
-            # Detect the eye landmark using DLC.
-            eye_coord = detect_eye(frame)
+            # Use the detect_eye function.
+            eye_coord = detect_eye(frame, keypoint=keypoint)
         except Exception as e:
-            print("Error during eye detection:", e)
+            print(f"Error during eye detection on frame {frame_idx}: {e}")
+            frame_idx += 1
             continue
         
-        # Convert the detected point to homogeneous coordinates.
+        # Convert to homogeneous coordinates and apply calibration.
         pt = np.array([eye_coord[0], eye_coord[1], 1]).reshape(3, 1)
         mapped = H.dot(pt)
-        mapped /= mapped[2, 0]  # Normalize
+        mapped /= mapped[2, 0]  # Normalize by the third coordinate.
         gaze_points.append((mapped[0, 0], mapped[1, 0]))
+        frame_idx += 1
     
     cap.release()
     

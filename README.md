@@ -153,6 +153,7 @@ python -m deeplabcut
 
 Modify the function in `src/detect_eye.py` so that it:
 - Loads your trained DLC model using your project configuration.
+    - Find the config.yaml path and update it in the `detect_eye.py` file
 - Processes each video frame to detect the eye landmark.
 - Returns the (x, y) coordinates for the detected landmark.
 

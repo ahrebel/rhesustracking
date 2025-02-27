@@ -7,7 +7,7 @@ import tempfile
 import glob
 
 # Path to your DeepLabCut project config file.
-PROJECT_CONFIG = '/Users/anthonyhrebello/rhesustracking/eyetracking-ahrebel-2025-02-26/config.yaml'
+PROJECT_CONFIG = '/Users/anthonyrebello/rhesustracking/eyetracking-ahrebel-2025-02-26/config.yaml'
 
 def detect_eye(frame, project_config=PROJECT_CONFIG, keypoint='left_pupil'):
     """

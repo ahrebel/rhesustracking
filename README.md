@@ -79,7 +79,7 @@ pip install -r requirements.txt
 > ```bash
 > pip install deeplabcut
 > pip install pyyaml tensorflow tensorpack tf-slim
-> pip install "deeplabcut[gui,tf]"
+> pip install 'deeplabcut[gui]'
 > ```
 
 ---

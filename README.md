@@ -78,6 +78,8 @@ pip install -r requirements.txt
 > DeepLabCut may install additional dependencies during its setup. If you experience issues, try installing DeepLabCut separately:
 > ```bash
 > pip install deeplabcut
+> pip install pyyaml tensorflow tensorpack tf-slim
+> pip install "deeplabcut[gui,tf]"
 > ```
 
 ---

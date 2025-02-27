@@ -81,6 +81,10 @@ pip install -r requirements.txt
 > pip install pyyaml tensorflow tensorpack tf-slim
 > pip install 'deeplabcut[gui]'
 > ```
+> You may need to run the following (or the version of the following for your OS)
+> ```bash
+> pip install --upgrade tensorflow_macos==2.12.0
+> ```
 
 ---
 

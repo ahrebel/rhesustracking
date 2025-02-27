@@ -47,7 +47,9 @@ cd rhesustracking
 
 #### Using Conda (Recommended):
 
-We recommend using Conda to manage dependencies. Run:
+We recommend using Conda to manage dependencies. Ensure you have Miniconda installed first.
+
+Run:
 
 ```bash
 conda create -n monkey-gaze-tracker -c conda-forge python=3.8 pytables hdf5 lzo opencv numpy pandas matplotlib scikit-learn scikit-image scipy tqdm statsmodels

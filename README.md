@@ -84,9 +84,10 @@ pip install -r requirements.txt
 - **SLEAP:**
   ```bash
   pip install sleap
+  pip install cattrs python-rapidjson jsmin albumentations jsonpickle pykalman seaborn ndx_pose
   ```
 
-> **Note:** DeepLabCut may install additional dependencies during its setup. If you experience issues, follow the instructions above.
+> **Note:** DeepLabCut and SLEAP may install additional dependencies during their setup. If you experience issues, follow the instructions above or check the documentation for the software.
 
 ---
 

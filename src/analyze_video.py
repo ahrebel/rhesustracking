@@ -1,4 +1,4 @@
-# analyze_video.py
+# src/analyze_video.py
 import cv2
 import os
 import pandas as pd
@@ -14,22 +14,19 @@ def analyze_video(video_path, output_csv_path):
         if not ret:
             break
         
-        # Process the frame for eye detection and head pose estimation.
+        # Process the frame using the fused detector.
         detection = detect_eye_and_head(frame)
-        eye_x, eye_y = detection["eye_coord"]
-        rotation_vector = detection["head_pose"]["rotation_vector"]
-        translation_vector = detection["head_pose"]["translation_vector"]
+        if detection:
+            eye_x, eye_y = detection["eye_coord"]
+            roll_angle = detection["roll_angle"]
+        else:
+            eye_x, eye_y, roll_angle = None, None, None
         
         results.append({
             "frame": frame_num,
             "eye_x": eye_x,
             "eye_y": eye_y,
-            "rotation_vector_x": rotation_vector[0][0],
-            "rotation_vector_y": rotation_vector[1][0],
-            "rotation_vector_z": rotation_vector[2][0],
-            "translation_vector_x": translation_vector[0][0],
-            "translation_vector_y": translation_vector[1][0],
-            "translation_vector_z": translation_vector[2][0]
+            "roll_angle": roll_angle
         })
         
         frame_num += 1
@@ -41,8 +38,7 @@ def analyze_video(video_path, output_csv_path):
 
 if __name__ == "__main__":
     import argparse
-    
-    parser = argparse.ArgumentParser(description="Analyze video for eye tracking.")
+    parser = argparse.ArgumentParser(description="Analyze video for fused eye tracking using DLC and SLEAP.")
     parser.add_argument("--video", required=True, help="Path to the input video file.")
     parser.add_argument("--output", required=True, help="Path to the output CSV file.")
     args = parser.parse_args()

@@ -1,18 +1,19 @@
-# Rhesus Macaque Gaze Tracker (DeepLabCut Edition)
+# Rhesus Macaque Gaze Tracker (DeepLabCut & SLEAP)
 
 ![20250225_2228_Animated Eyes in Cyberspace_remix_01jn04sjzbeb2v028a2akx9nex](https://github.com/user-attachments/assets/0f245b14-ec20-4a11-868a-ae207a7dfa1d)
 
-This repo creates an eye–tracking software for Rhesus macaques. It is designed to be used for monkeys interacting with a touchscreen using **DeepLabCut (DLC)** for eye–landmark detection. DeepLabCut provides an intuitive GUI for labeling, training, and analysis. Once the DLC model is trained, it can be used to extract eye coordinates from each video frame. These coordinates are then mapped to screen coordinates through calibration which allows for detailed analysis of gaze and fixation patterns and durations.
+This repository implements an eye–tracking system for Rhesus macaques and humans by fusing landmark detection from **DeepLabCut (DLC)** and **SLEAP**. The system robustly extracts eye (and head) landmarks from video frames, maps raw eye coordinates to screen coordinates via calibration, and analyzes gaze and fixation patterns during touchscreen interactions.
 
 > **Key Features:**
 > - **Offline Video Processing:** Process pre–recorded trial videos for analysis.
-> - **DeepLabCut Integration:** Leverage a trained DLC model to detect eye landmarks with a user-friendly GUI.
-> - **Touch Event Correlation:** Synchronize touch event logs (CSV/TXT) with gaze data to correlate screen interactions.
+> - **Dual-Model Integration:** Uses both a trained DLC model and a trained SLEAP model to detect eye landmarks.
+> - **Fusion Pipeline:** Combines outputs from DLC and SLEAP using weighted averaging for enhanced robustness.
+> - **Touch Event Correlation:** Synchronize touch event logs (CSV/TXT) with gaze data.
 > - **Gaze Mapping & Calibration:** Compute a calibration (homography) matrix to accurately map raw eye coordinates to screen coordinates.
-> - **Optional Gaze Mapping Training:** Improve mapping accuracy by fine–tuning the calibration model with paired training data.
+> - **Optional Gaze Mapping Training:** Fine–tune the calibration model with paired training data.
 > - **Visualization:** Generate plots, heatmaps, and other summaries to visualize gaze distribution.
 > - **Cross–Platform:** Designed to run on macOS and Windows systems with CPU–only setups.
-> - **Enhanced with Head–Pose Estimation:** In addition to eye detection, the system now estimates head pose using additional facial landmarks. This extra step makes the gaze tracker robust against variations in head position and ensures that the mapping from eye–coordinates to screen coordinates remains accurate even when the subject’s head moves.
+> - **Enhanced Head–Pose Estimation:** Incorporates head–pose (e.g., head roll) estimation using facial landmarks.
 
 ---
 
@@ -21,21 +22,22 @@ This repo creates an eye–tracking software for Rhesus macaques. It is designed
 1. [Installation and Setup](#installation-and-setup)
 2. [Data Preparation](#data-preparation)
 3. [DeepLabCut Model Training](#deeplabcut-model-training)
-4. [Integration & Eye Detection](#integration--eye-detection)
-5. [Calibration](#calibration)
-6. [Video Analysis](#video-analysis)
-7. [Optional: Fine–Tuning Gaze Mapping](#optional-fine-tuning-gaze-mapping)
-8. [Visualization](#visualization)
-9. [Data Loading](#data-loading)
-10. [Final Verification](#final-verification)
-11. [Troubleshooting](#troubleshooting)
-12. [Future Improvements](#future-improvements)
+4. [SLEAP Model Training](#sleap-model-training)
+5. [Integration & Eye Detection](#integration--eye-detection)
+6. [Calibration](#calibration)
+7. [Video Analysis](#video-analysis)
+8. [Optional: Fine–Tuning Gaze Mapping](#optional-fine-tuning-gaze-mapping)
+9. [Visualization](#visualization)
+10. [Data Loading](#data-loading)
+11. [Final Verification](#final-verification)
+12. [Troubleshooting](#troubleshooting)
+13. [Future Improvements](#future-improvements)
 
 ---
 
-## Installation and Setup
+## 1. Installation and Setup
 
-### 1. Clone the Repository
+### Clone the Repository
 
 Open your terminal and run:
 
@@ -44,14 +46,14 @@ git clone https://github.com/ahrebel/rhesustracking.git
 cd rhesustracking
 ```
 
-### 2. Create and Activate Your Python Environment
+### Create and Activate Your Python Environment
 
 #### Using Conda (Recommended):
 
-We recommend using Conda to manage dependencies. Ensure you have Miniconda installed first. Visit the link below to install:
-https://www.anaconda.com/download/
+Make sure you have Miniconda installed:
+[Download Anaconda/Miniconda](https://www.anaconda.com/download/)
 
-Run:
+Then run:
 
 ```bash
 conda create -n monkey-gaze-tracker -c conda-forge python=3.8 pytables hdf5 lzo opencv numpy pandas matplotlib scikit-learn scikit-image scipy tqdm statsmodels
@@ -60,46 +62,45 @@ conda activate monkey-gaze-tracker
 
 #### Alternatively, Using pip with a Virtual Environment:
 
-If you prefer using pip:
-
 ```bash
 python -m venv venv
 source venv/bin/activate   # On Windows use: venv\Scripts\activate
 ```
 
-### 3. Install Required Packages
+### Install Required Packages
 
-Install the necessary packages including DeepLabCut by running:
+Install all necessary packages:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-> **Note:**  
-> DeepLabCut may install additional dependencies during its setup. If you experience issues, try installing DeepLabCut separately:
-> ```bash
-> pip install deeplabcut
-> pip install pyyaml tensorflow tensorpack tf-slim
-> pip install 'deeplabcut[gui]'
-> ```
-> You may need to run the following (or the version appropriate for your OS):
-> ```bash
-> pip install --upgrade tensorflow_macos==2.12.0
-> ```
+#### Additional Dependencies:
+
+- **DeepLabCut:**
+  ```bash
+  pip install deeplabcut pyyaml tensorflow tensorpack tf-slim 'deeplabcut[gui]'
+  ```
+- **SLEAP:**
+  ```bash
+  pip install sleap
+  ```
+
+> **Note:** DeepLabCut may install additional dependencies during its setup. If you experience issues, follow the instructions above.
 
 ---
 
-## Data Preparation
+## 2. Data Preparation
 
 ### Video Files
 
 - **Input Videos:**  
-  Place your trial video files (e.g., `1.mp4`, `2.mp4`, etc.) in a designated folder (for example, `videos/input/`).
+  Place your trial videos (e.g., `1.mp4`, `2.mp4`, etc.) in a designated folder (for example, `videos/input/`).
 
 ### Touch Event Files
 
 - **Touch Logs:**  
-  For each video, create a corresponding touch event file (e.g., `1.txt` or `1.csv`) formatted as CSV with a header:
+  For each video, create a corresponding touch event file (e.g., `1.csv`) formatted as CSV with a header:
   ```csv
   timestamp,x,y
   ```
@@ -108,133 +109,146 @@ pip install -r requirements.txt
   2025-02-24T18:41:57.2864969-05:00,16,15
   2025-02-24T18:41:58.6795674-05:00,34,25
   ```
-  Make sure timestamps are in ISO 8601 format.
+  Ensure timestamps are in ISO 8601 format.
 
 ---
 
-## DeepLabCut Model Training
+## 3. DeepLabCut Model Training
 
-Accurate eye landmark detection is essential. Follow these steps to create and train your DLC model:
+Accurate eye landmark detection with DLC is critical. Follow these steps:
 
-### 1. Launch the DLC GUI
-
-Start the DeepLabCut GUI by running:
-
-```bash
-python -m deeplabcut
-```
-
-### 2. Create a New Project
-
-- In the GUI, select **"Create New Project"**.
-- Enter your project name, your name, and add the video(s) you wish to analyze.
-- Define the body parts to label (e.g., a single keypoint such as `eye` or `pupil_center`). **For enhanced functionality, label additional keypoints** such as `left_pupil`, `right_pupil`, `corner_left`, and `corner_right` to allow for head–pose estimation.
-
-### 3. Label Frames
-
-- Use the DLC GUI to carefully label the required landmarks on a representative set of frames.
-- Aim for diversity in your frame selection to improve model robustness.
-
-### 4. Train the Network
-
-- After labeling, choose the **“Train Network”** option.
-- *Tip for CPU–only systems:* Edit your project’s `config.yaml` file to change the network architecture (e.g., from `resnet_50` to a lighter model like `mobilenet_v2_1.0`) to reduce training time and computational load.
-- Monitor the training progress until completion.
-
-### 5. Evaluate the Model
-
-- Use the **“Evaluate Network”** option in the GUI to assess detection accuracy.
-- If necessary, refine your labels and retrain.
+1. **Launch the DLC GUI:**
+   ```bash
+   python -m deeplabcut
+   ```
+2. **Create a New Project:**  
+   - Enter your project name and add the video(s).
+   - Label keypoints such as `left_pupil`, `right_pupil`, `corner_left`, and `corner_right` (add more if needed for head–pose estimation).
+3. **Label Frames:**  
+   Use a diverse set of frames to ensure robust training.
+4. **Train the Network:**  
+   Use the **"Train Network"** option. For CPU-only systems, consider using a lighter model (e.g., `mobilenet_v2_1.0`).
+5. **Evaluate the Model:**  
+   Use the **"Evaluate Network"** option to assess accuracy and refine if necessary.
+6. **Update Config Path:**  
+   In `src/detect_eye_dlc.py`, ensure the variable `PROJECT_CONFIG` points to your DLC project’s `config.yaml` file.  
+   *Example:*
+   ```python
+   PROJECT_CONFIG = '/Users/anthonyrebello/rhesustracking/eyetracking-ahrebel-2025-02-26/config.yaml'
+   ```
 
 ---
 
-## Integration & Eye Detection
+## 4. SLEAP Model Training
 
-### Updated Eye Detection Function
+Training a SLEAP model complements DLC by providing additional landmark detection capabilities. Follow these steps to train a SLEAP model for both Rhesus macaques and humans:
 
-The function in `src/detect_eye.py` has been updated to not only detect the eye coordinate (by, for example, averaging the positions of the left and right pupil) but also to extract additional facial landmarks (such as the eye corners). A new module, `head_pose_estimator.py`, uses these landmarks with OpenCV’s `solvePnP` to estimate head–pose. This helps compensate for head movements during analysis.
+1. **Install SLEAP:**
+   Ensure SLEAP is installed:
+   ```bash
+   pip install sleap
+   ```
+2. **Launch the SLEAP Labeling GUI:**
+   ```bash
+   sleap-label
+   ```
+   - This opens the SLEAP GUI.
+3. **Create a New SLEAP Project:**
+   - Import your video(s) or images into SLEAP.
+   - Label keypoints for each subject. **Essential labels:** `left_eye` and `right_eye`. You may add more keypoints as needed.
+4. **Label a Diverse Set of Frames:**
+   - Ensure your training dataset includes frames under varying conditions (lighting, pose, etc.) for both macaques and humans.
+5. **Train the Model:**
+   - Once labeling is complete, use the SLEAP training tool:
+     ```bash
+     sleap-train config.yaml
+     ```
+     - SLEAP will generate a training configuration file (usually named `config.yaml`). Adjust training parameters if necessary.
+   - Monitor training progress until convergence.
+6. **Export the Trained Model:**
+   - After training, export the model checkpoint (e.g., `sleap_model.ckpt`).
+7. **Update Model Path:**
+   - In `src/detect_eye_sleap.py`, set the `MODEL_PATH` variable to the location of your trained SLEAP checkpoint.
+   *Example:*
+   ```python
+   MODEL_PATH = 'models/sleap_model.ckpt'
+   ```
 
-The updated function `detect_eye_and_head` does the following:
-- Saves a frame as a temporary video file.
-- Runs DLC analysis on the frame to generate predictions for the landmarks.
-- Extracts the coordinates for `left_pupil`, `right_pupil`, `corner_left`, and `corner_right`.
-- Computes the eye coordinate as the average of the pupil positions.
-- Defines a camera matrix and calls the head–pose estimator to get rotation and translation vectors.
-- Returns a dictionary containing the eye coordinate, the full landmarks, and the head pose.
-
-This extra information is then used in the video analysis pipeline.
+For more detailed instructions, refer to the [SLEAP GitHub repository](https://github.com/talmo/sleap) and its documentation.
 
 ---
 
-## Calibration
+## 5. Integration & Eye Detection
+
+The pipeline now leverages both models:
+- **DLC Detection:** Your working DLC code is located in `src/detect_eye_dlc.py`.
+- **SLEAP Detection:** New SLEAP detection is implemented in `src/detect_eye_sleap.py`.
+- **Fusion Module:** In `src/fuse_landmarks.py`, outputs from both models are combined via weighted averaging.
+
+The main detection function in `src/detect_eye.py` calls both detectors and fuses their outputs. This hybrid approach increases robustness, especially in challenging scenarios.
+
+---
+
+## 6. Calibration
 
 ### Running Calibration
 
-To map raw eye coordinates (which are now potentially adjusted with head–pose information) to screen coordinates, you need a calibration step:
-
-1. **Run Calibration Script:**  
-   Execute the calibration script by running:
+Map raw (fused) eye coordinates to screen coordinates using your touch event data:
+1. **Run the Calibration Script:**
    ```bash
    python src/calibrate.py
    ```
-2. **How It Works:**  
-   - The script reads the first four touch events from each touch event file.
-   - It computes a homography matrix (calibration matrix) that maps raw eye coordinates to the actual screen coordinates.
+2. **Processing Details:**  
+   - The script reads the first four touch events from each event file.
+   - It computes a homography matrix mapping raw eye coordinates to screen coordinates.
 3. **Output:**  
-   Calibration files (e.g., `calibration_matrix_1.npy` and `calibration_1.yaml`) will be saved in the `data/trained_model/` folder.
+   Calibration files (e.g., `calibration_matrix_1.npy` and `calibration_1.yaml`) are saved in the `data/trained_model/` folder.
 
 ---
 
-## Video Analysis
+## 7. Video Analysis
 
-### Analyzing Videos
+After calibration, analyze your videos:
 
-Once the updated eye detection function is integrated and calibration is complete, you can analyze your videos.
-
-1. **Run Analysis Script:**  
-   Execute:
+1. **Run the Analysis Script:**
    ```bash
-   python src/analyze_video.py
+   python src/analyze_video.py --video path/to/video.mp4 --output path/to/output.csv
    ```
 2. **Processing Details:**  
-   - The script processes each video along with its corresponding touch event file.
-   - For each frame, it calls the new `detect_eye_and_head` function to extract the raw eye coordinates and head–pose parameters.
-   - The calibration matrix is applied to translate raw eye coordinates to screen coordinates.
-   - The CSV output now includes the following columns: frame number, raw eye coordinates (`eye_x`, `eye_y`), mapped screen coordinates (`screen_x`, `screen_y`), and head–pose parameters (`rvec_x`, `rvec_y`, `rvec_z`, `tvec_x`, `tvec_y`, `tvec_z`).
+   - Each frame is processed using the fused detection function.
+   - The system extracts raw eye coordinates, head pose (roll angle), and applies the calibration matrix to map them to screen coordinates.
 3. **Output:**  
-   Results are saved in the `data/analysis_output/` directory in CSV format. These data can later be correlated with touch event logs for gaze–tracking analysis.
+   Results are saved as a CSV file (including frame number, eye coordinates, and head pose parameters).
 
 ---
 
-## Optional: Fine–Tuning Gaze Mapping
+## 8. Optional: Fine–Tuning Gaze Mapping
 
-If you have additional training data with paired information (`raw_x, raw_y, touch_x, touch_y`), you can further refine the gaze mapping:
-
-1. **Run Gaze Mapping Training Script:**
+If you have additional paired data (raw coordinates and click positions), further refine the mapping:
+1. **Run the Gaze Mapping Training Script:**
    ```bash
    python src/train_gaze_mapping.py --data path/to/your_training_data.csv
    ```
 2. **Result:**  
-   This updates the calibration (gaze mapping) model and saves the refined calibration matrix to the `data/trained_model/` folder.
+   This updates the calibration model and saves a refined calibration matrix.
 
 ---
 
-## Visualization
+## 9. Visualization
 
-Generate plots or heatmaps to visualize fixation data and screen–area distributions:
-
+Generate visual summaries of gaze data:
 1. **Run the Visualization Script:**
    ```bash
    python src/visualize.py --csv path/to/your_gaze_data.csv
    ```
 2. **Output:**  
-   Visualizations (such as heatmaps or summary plots) will be generated to help interpret the fixation distribution across the screen.
+   Heatmaps, fixation plots, and other visualizations are produced to help interpret the data.
 
 ---
 
-## Data Loading
+## 10. Data Loading
 
-A new helper file, `data_loader.py`, provides functions to load gaze data and click event data. For example:
+Use `data_loader.py` to load gaze and touch event data for further analysis:
 
 ```python
 # data_loader.py
@@ -257,19 +271,17 @@ def load_click_data(click_csv_path):
     return pd.read_csv(click_csv_path)
 ```
 
-These functions make it easy to later correlate gaze data with touch/click logs.
-
 ---
 
-## Final Verification
+## 11. Final Verification
 
-After installation and setup, verify that all components are installed correctly by running:
+Verify that all components are installed correctly:
 
 ```bash
 python -c "import tables, deeplabcut; print('Installation successful')"
 ```
 
-You should see the following output:
+Expected output:
 
 ```
 Installation successful
@@ -277,28 +289,32 @@ Installation successful
 
 ---
 
-## Troubleshooting
+## 12. Troubleshooting
 
 - **DeepLabCut Model Issues:**  
   Ensure that the DLC model path in your configuration is correct and that the model has been properly trained.
+- **SLEAP Model Issues:**  
+  Confirm that your SLEAP checkpoint path (`MODEL_PATH` in `src/detect_eye_sleap.py`) is correct and that the model is trained on both species.
 - **Calibration Errors:**  
-  Verify that your touch event files are formatted correctly and share the same base name as their corresponding video files.
+  Verify that your touch event files are correctly formatted and share the same base name as their corresponding video files.
 - **Performance Problems:**  
-  For CPU–only systems, consider reducing the video resolution or switching to a lighter network architecture (e.g., `mobilenet_v2`) in your DLC config.
+  For CPU-only systems, consider reducing video resolution or using lighter network architectures.
 - **Dependency Conflicts:**  
-  If you run into package conflicts, double-check the package versions in `requirements.txt` and install DeepLabCut last to allow it to resolve its own dependencies.
+  Check package versions in `requirements.txt` and install DLC and SLEAP last to allow them to resolve dependencies.
 
 ---
 
-## Future Improvements
+## 13. Future Improvements
 
-- **Head–Pose Robustness:**  
-  Although head–pose estimation is integrated, further refinement of the 3D facial model and calibration (including per–session camera calibration) could improve accuracy when the subject moves their head.
+- **Enhanced Head–Pose Robustness:**  
+  Further refine the 3D facial model and incorporate additional facial landmarks.
 - **Learning-Based Gaze Mapping:**  
-  Integrate a learning module that uses paired training data (raw eye positions and corresponding touch events) to refine the mapping model and potentially adapt to new conditions automatically.
+  Integrate a learning module to continuously improve the mapping model with new data.
 - **Extended Visualization:**  
-  Expand visualization tools to include dynamic heatmaps, fixation duration histograms, and region–based analysis to quantify screen interaction patterns.
+  Expand visualization tools to include dynamic heatmaps, fixation duration histograms, and region-based analysis.
 
 ---
 
 Happy tracking!
+
+If you encounter any issues or have suggestions for further improvements, please open an issue on GitHub.

@@ -1,41 +1,20 @@
 # head_pose_estimator.py
-import cv2
 import numpy as np
 
-def estimate_head_pose(landmarks, camera_matrix, dist_coeffs=np.zeros((4,1))):
+def estimate_head_roll(left_corner, right_corner):
     """
-    Estimate head pose using 2D landmarks and predefined 3D model points.
+    Estimate the head roll angle (rotation about the longitudinal axis) based on the 
+    positions of the left and right eye corners.
     
     Parameters:
-      landmarks: dict with keys: 'left_pupil', 'right_pupil', 'corner_left', 'corner_right'
-                 Each value is a tuple (x, y).
-      camera_matrix: Intrinsic camera matrix.
-      dist_coeffs: Distortion coefficients (default: zeros).
+      left_corner (tuple): (x, y) coordinates of the left eye corner.
+      right_corner (tuple): (x, y) coordinates of the right eye corner.
     
     Returns:
-      success: Boolean indicating if the pose was estimated.
-      rvec: Rotation vector.
-      tvec: Translation vector.
-      
-    Note:
-      The model points below are approximate; you may wish to adjust them based on
-      your experimental setup.
+      float: Roll angle in degrees. 0 means the corners are level.
     """
-    # Define approximate 3D model points (in millimeters or arbitrary units)
-    model_points = np.array([
-        [-30.0, 0.0, 0.0],    # left pupil approximate 3D location
-        [30.0, 0.0, 0.0],     # right pupil
-        [-40.0, -30.0, 0.0],  # left eye corner
-        [40.0, -30.0, 0.0]    # right eye corner
-    ], dtype=np.float32)
-    
-    # Extract corresponding 2D image points
-    image_points = np.array([
-        landmarks['left_pupil'],
-        landmarks['right_pupil'],
-        landmarks['corner_left'],
-        landmarks['corner_right']
-    ], dtype=np.float32)
-    
-    success, rvec, tvec = cv2.solvePnP(model_points, image_points, camera_matrix, dist_coeffs)
-    return success, rvec, tvec
+    dx = right_corner[0] - left_corner[0]
+    dy = right_corner[1] - left_corner[1]
+    angle_rad = np.arctan2(dy, dx)
+    angle_deg = np.degrees(angle_rad)
+    return angle_deg

@@ -1,28 +1,28 @@
-import numpy as np
+# train_gaze_mapping.py
 import pandas as pd
-import cv2
-import yaml
+from sklearn.linear_model import LinearRegression
+import pickle
 import argparse
 
-def train_gaze_mapping(training_csv, output_matrix='data/trained_model/calibration_matrix_refined.npy'):
+def train_gaze_mapping(data_path, output_model='data/trained_model/gaze_mapping_model.pkl'):
     """
-    Train a refined gaze mapping using paired data from a CSV file.
-    The CSV should have columns: raw_x, raw_y, touch_x, touch_y.
+    Trains a regression model to map raw eye features to screen coordinates.
+    Expected CSV format: columns for 'raw_eye_x', 'raw_eye_y', 'head_roll', 'screen_x', 'screen_y'
     """
-    df = pd.read_csv(training_csv)
-    raw_points = df[['raw_x', 'raw_y']].values
-    touch_points = df[['touch_x', 'touch_y']].values
-    H, status = cv2.findHomography(raw_points.astype(np.float32), touch_points.astype(np.float32), cv2.RANSAC)
-    
-    # Save the refined calibration matrix.
-    np.save(output_matrix, H)
-    with open('data/trained_model/calibration_refined.yaml', 'w') as f:
-        yaml.dump({'homography': H.tolist()}, f)
-    print("Refined calibration matrix saved to:", output_matrix)
+    df = pd.read_csv(data_path)
+    # Features: raw eye coordinate and head roll.
+    X = df[['raw_eye_x', 'raw_eye_y', 'head_roll']].values
+    # Targets: screen coordinates.
+    y = df[['screen_x', 'screen_y']].values
+    model = LinearRegression()
+    model.fit(X, y)
+    with open(output_model, 'wb') as f:
+        pickle.dump(model, f)
+    print("Gaze mapping model saved to", output_model)
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Train Gaze Mapping')
-    parser.add_argument('--data', type=str, required=True, help='Path to training data CSV')
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data', type=str, required=True, help='Path to training CSV file')
+    parser.add_argument('--output', type=str, default='data/trained_model/gaze_mapping_model.pkl', help='Output model path')
     args = parser.parse_args()
-    
-    train_gaze_mapping(args.data)
+    train_gaze_mapping(args.data, args.output)

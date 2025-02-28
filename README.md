@@ -2,8 +2,6 @@
 
 ![20250225_2228_Animated Eyes in Cyberspace_remix_01jn04sjzbeb2v028a2akx9nex](https://github.com/user-attachments/assets/0f245b14-ec20-4a11-868a-ae207a7dfa1d)
 
-
-
 This repo creates an eye–tracking software for Rhesus macaques. It is designed to be used for monkeys interacting with a touchscreen using **DeepLabCut (DLC)** for eye–landmark detection. DeepLabCut provides an intuitive GUI for labeling, training, and analysis. Once the DLC model is trained, it can be used to extract eye coordinates from each video frame. These coordinates are then mapped to screen coordinates through calibration which allows for detailed analysis of gaze and fixation patterns and durations.
 
 > **Key Features:**
@@ -14,6 +12,7 @@ This repo creates an eye–tracking software for Rhesus macaques. It is designed
 > - **Optional Gaze Mapping Training:** Improve mapping accuracy by fine–tuning the calibration model with paired training data.
 > - **Visualization:** Generate plots, heatmaps, and other summaries to visualize gaze distribution.
 > - **Cross–Platform:** Designed to run on macOS and Windows systems with CPU–only setups.
+> - **Enhanced with Head–Pose Estimation:** In addition to eye detection, the system now estimates head pose using additional facial landmarks. This extra step makes the gaze tracker robust against variations in head position and ensures that the mapping from eye–coordinates to screen coordinates remains accurate even when the subject’s head moves.
 
 ---
 
@@ -27,8 +26,10 @@ This repo creates an eye–tracking software for Rhesus macaques. It is designed
 6. [Video Analysis](#video-analysis)
 7. [Optional: Fine–Tuning Gaze Mapping](#optional-fine-tuning-gaze-mapping)
 8. [Visualization](#visualization)
-9. [Final Verification](#final-verification)
-10. [Troubleshooting](#troubleshooting)
+9. [Data Loading](#data-loading)
+10. [Final Verification](#final-verification)
+11. [Troubleshooting](#troubleshooting)
+12. [Future Improvements](#future-improvements)
 
 ---
 
@@ -81,7 +82,7 @@ pip install -r requirements.txt
 > pip install pyyaml tensorflow tensorpack tf-slim
 > pip install 'deeplabcut[gui]'
 > ```
-> You may need to run the following (or the version of the following for your OS)
+> You may need to run the following (or the version appropriate for your OS):
 > ```bash
 > pip install --upgrade tensorflow_macos==2.12.0
 > ```
@@ -127,11 +128,11 @@ python -m deeplabcut
 
 - In the GUI, select **"Create New Project"**.
 - Enter your project name, your name, and add the video(s) you wish to analyze.
-- Define the body parts to label (e.g., a single keypoint such as `eye` or `pupil_center`).
+- Define the body parts to label (e.g., a single keypoint such as `eye` or `pupil_center`). **For enhanced functionality, label additional keypoints** such as `left_pupil`, `right_pupil`, `corner_left`, and `corner_right` to allow for head–pose estimation.
 
 ### 3. Label Frames
 
-- Use the DLC GUI to carefully label the eye landmark on a representative set of frames.
+- Use the DLC GUI to carefully label the required landmarks on a representative set of frames.
 - Aim for diversity in your frame selection to improve model robustness.
 
 ### 4. Train the Network
@@ -149,15 +150,19 @@ python -m deeplabcut
 
 ## Integration & Eye Detection
 
-### Update the Eye Detection Function
+### Updated Eye Detection Function
 
-Modify the function in `src/detect_eye.py` so that it:
-- Loads your trained DLC model using your project configuration.
-    - Find the config.yaml path and update it in the `detect_eye.py` file
-- Processes each video frame to detect the eye landmark.
-- Returns the (x, y) coordinates for the detected landmark.
+The function in `src/detect_eye.py` has been updated to not only detect the eye coordinate (by, for example, averaging the positions of the left and right pupil) but also to extract additional facial landmarks (such as the eye corners). A new module, `head_pose_estimator.py`, uses these landmarks with OpenCV’s `solvePnP` to estimate head–pose. This helps compensate for head movements during analysis.
 
-Ensure the updated function correctly integrates with the rest of the gaze tracking pipeline.
+The updated function `detect_eye_and_head` does the following:
+- Saves a frame as a temporary video file.
+- Runs DLC analysis on the frame to generate predictions for the landmarks.
+- Extracts the coordinates for `left_pupil`, `right_pupil`, `corner_left`, and `corner_right`.
+- Computes the eye coordinate as the average of the pupil positions.
+- Defines a camera matrix and calls the head–pose estimator to get rotation and translation vectors.
+- Returns a dictionary containing the eye coordinate, the full landmarks, and the head pose.
+
+This extra information is then used in the video analysis pipeline.
 
 ---
 
@@ -165,7 +170,7 @@ Ensure the updated function correctly integrates with the rest of the gaze track
 
 ### Running Calibration
 
-To map raw eye coordinates to screen coordinates, you need a calibration step:
+To map raw eye coordinates (which are now potentially adjusted with head–pose information) to screen coordinates, you need a calibration step:
 
 1. **Run Calibration Script:**  
    Execute the calibration script by running:
@@ -184,7 +189,7 @@ To map raw eye coordinates to screen coordinates, you need a calibration step:
 
 ### Analyzing Videos
 
-Once the eye detection function is updated and calibration is complete, analyze your videos:
+Once the updated eye detection function is integrated and calibration is complete, you can analyze your videos.
 
 1. **Run Analysis Script:**  
    Execute:
@@ -193,11 +198,11 @@ Once the eye detection function is updated and calibration is complete, analyze 
    ```
 2. **Processing Details:**  
    - The script processes each video along with its corresponding touch event file.
-   - It applies the updated eye detection (using your DLC model) to extract eye coordinates.
-   - The calibration matrix is applied to translate raw coordinates to screen positions.
-   - The screen is divided into predefined regions (e.g., 110 regions) to compute fixation times.
+   - For each frame, it calls the new `detect_eye_and_head` function to extract the raw eye coordinates and head–pose parameters.
+   - The calibration matrix is applied to translate raw eye coordinates to screen coordinates.
+   - The CSV output now includes the following columns: frame number, raw eye coordinates (`eye_x`, `eye_y`), mapped screen coordinates (`screen_x`, `screen_y`), and head–pose parameters (`rvec_x`, `rvec_y`, `rvec_z`, `tvec_x`, `tvec_y`, `tvec_z`).
 3. **Output:**  
-   Results are saved in the `data/analysis_output/` directory in CSV and JSON formats.
+   Results are saved in the `data/analysis_output/` directory in CSV format. These data can later be correlated with touch event logs for gaze–tracking analysis.
 
 ---
 
@@ -216,7 +221,7 @@ If you have additional training data with paired information (`raw_x, raw_y, tou
 
 ## Visualization
 
-Generate plots or heatmaps to visualize fixation data:
+Generate plots or heatmaps to visualize fixation data and screen–area distributions:
 
 1. **Run the Visualization Script:**
    ```bash
@@ -224,6 +229,35 @@ Generate plots or heatmaps to visualize fixation data:
    ```
 2. **Output:**  
    Visualizations (such as heatmaps or summary plots) will be generated to help interpret the fixation distribution across the screen.
+
+---
+
+## Data Loading
+
+A new helper file, `data_loader.py`, provides functions to load gaze data and click event data. For example:
+
+```python
+# data_loader.py
+import pandas as pd
+
+def load_gaze_data(gaze_csv_path):
+    """
+    Load gaze data CSV file. Expected columns include:
+      frame, eye_x, eye_y, screen_x, screen_y, rvec_x, rvec_y, rvec_z, tvec_x, tvec_y, tvec_z
+    Returns a pandas DataFrame.
+    """
+    return pd.read_csv(gaze_csv_path)
+
+def load_click_data(click_csv_path):
+    """
+    Load click event data CSV file. Expected to have columns:
+      timestamp,x,y
+    Returns a pandas DataFrame.
+    """
+    return pd.read_csv(click_csv_path)
+```
+
+These functions make it easy to later correlate gaze data with touch/click logs.
 
 ---
 
@@ -253,6 +287,17 @@ Installation successful
   For CPU–only systems, consider reducing the video resolution or switching to a lighter network architecture (e.g., `mobilenet_v2`) in your DLC config.
 - **Dependency Conflicts:**  
   If you run into package conflicts, double-check the package versions in `requirements.txt` and install DeepLabCut last to allow it to resolve its own dependencies.
+
+---
+
+## Future Improvements
+
+- **Head–Pose Robustness:**  
+  Although head–pose estimation is integrated, further refinement of the 3D facial model and calibration (including per–session camera calibration) could improve accuracy when the subject moves their head.
+- **Learning-Based Gaze Mapping:**  
+  Integrate a learning module that uses paired training data (raw eye positions and corresponding touch events) to refine the mapping model and potentially adapt to new conditions automatically.
+- **Extended Visualization:**  
+  Expand visualization tools to include dynamic heatmaps, fixation duration histograms, and region–based analysis to quantify screen interaction patterns.
 
 ---
 

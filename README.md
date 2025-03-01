@@ -69,6 +69,12 @@ pip install -r requirements.txt
   pip install deeplabcut pyyaml tensorflow tensorpack tf-slim 'deeplabcut[gui]'
   ```
 
+
+If you receive the error "ModuleNotFoundError: No module named 'keras.legacy_tf_layers'", please use the following command (for MacOS) or the appropriate --upgrade command for your OS.
+  ```bash
+  pip install --upgrade tensorflow_macos==2.12.0
+  ```
+
 ---
 
 ## 2. Data Preparation
@@ -192,6 +198,11 @@ Installation successful
   Consider reducing video resolution or using lighter models.
 - **Dependencies:**  
   If issues arise, check your package versions against the requirements.
+- ** ModuleNotFoundError: No module named 'keras.legacy_tf_layers'
+  Please use the following command (for MacOS) or the appropriate --upgrade command for   your OS.
+  ```bash
+  pip install --upgrade tensorflow_macos==2.12.0
+  ```
 
 ---
 

@@ -1,7 +1,3 @@
-Below is a rewritten README that explains your project and provides clear, step-by-step instructions for installation, data preparation, training, analysis, and visualization.
-
----
-
 # Rhesus Macaque Gaze Tracker (DeepLabCut)
 
 ![Animated Eyes](https://github.com/user-attachments/assets/0f245b14-ec20-4a11-868a-ae207a7dfa1d)

@@ -1,3 +1,4 @@
+# analyze_video.py
 import cv2
 import os
 import pandas as pd
@@ -7,7 +8,8 @@ def analyze_video(video_path, config_path, output_csv_path):
     """
     Analyze a video using DeepLabCut-based detection.
     For each frame, detect landmarks and compute eye coordinate and head roll.
-    The raw predictions (per frame) are saved to a CSV.
+    The predictions (per frame) are saved to a CSV with the following columns:
+        frame, time, x, y, roll_angle
     
     Args:
         video_path (str): Path to the input video.
@@ -18,6 +20,7 @@ def analyze_video(video_path, config_path, output_csv_path):
     if not cap.isOpened():
         raise ValueError(f"Could not open video file: {video_path}")
     
+    fps = cap.get(cv2.CAP_PROP_FPS)
     frame_num = 0
     results = []
     
@@ -29,16 +32,21 @@ def analyze_video(video_path, config_path, output_csv_path):
         # Detect landmarks on this frame using DLC.
         try:
             detection = detect_eye_and_head(frame, project_config=config_path)
-            eye_x, eye_y = detection["eye_coord"]
+            eye_coord = detection["eye_coord"]  # (x, y)
             roll_angle = detection["roll_angle"]
         except Exception as e:
             print(f"Frame {frame_num}: Detection failed with error: {e}")
-            eye_x, eye_y, roll_angle = None, None, None
+            eye_coord = (None, None)
+            roll_angle = None
+        
+        # Calculate timestamp (in seconds)
+        timestamp = frame_num / fps if fps > 0 else None
         
         results.append({
             "frame": frame_num,
-            "eye_x": eye_x,
-            "eye_y": eye_y,
+            "time": timestamp,
+            "x": eye_coord[0],
+            "y": eye_coord[1],
             "roll_angle": roll_angle
         })
         frame_num += 1

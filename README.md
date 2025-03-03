@@ -7,6 +7,7 @@ This repository implements an eye–tracking system for Rhesus macaques (and hum
 > **Key Features:**
 >
 > - **Offline Video Processing:** Analyze pre–recorded trial videos.
+> - **Real–Time Monitoring:** Automatically detect new videos in a designated folder, process them, and generate heatmaps.
 > - **DeepLabCut–Based Landmark Detection:** Use a trained DLC model to detect key eye landmarks.
 > - **Calibration & Gaze Mapping:** Compute a homography matrix and refine mapping via a regression model to accurately translate eye coordinates to screen coordinates.
 > - **Visualization:** Generate heatmaps and other visual summaries of gaze distribution.
@@ -23,11 +24,12 @@ This repository implements an eye–tracking system for Rhesus macaques (and hum
 4. [Eye Detection Integration](#eye-detection-integration)
 5. [Calibration](#calibration)
 6. [Video Analysis](#video-analysis)
-7. [Optional: Fine–Tuning Gaze Mapping](#optional-fine-tuning-gaze-mapping)
-8. [Visualization](#visualization)
-9. [Data Loading and Final Verification](#data-loading-and-final-verification)
-10. [Troubleshooting](#troubleshooting)
-11. [Future Improvements](#future-improvements)
+7. [Real–Time Video Monitoring and Processing](#real-time-video-monitoring-and-processing)
+8. [Optional: Fine–Tuning Gaze Mapping](#optional-fine-tuning-gaze-mapping)
+9. [Visualization](#visualization)
+10. [Data Loading and Final Verification](#data-loading-and-final-verification)
+11. [Troubleshooting](#troubleshooting)
+12. [Future Improvements](#future-improvements)
 
 ---
 
@@ -157,7 +159,35 @@ pip install deeplabcut pyyaml tensorflow tensorpack tf-slim 'deeplabcut[gui]'
 
 ---
 
-## 7. Optional: Fine–Tuning Gaze Mapping
+## 7. Real–Time Video Monitoring and Processing
+
+To automate analysis and visualization, use the new monitoring script. This script continuously watches the `videos/input/` folder for new video files. When a new video is detected, it will:
+
+- **Process the video:**  
+  Run the analysis (via `src/analyze_video.py`) to extract gaze data.
+- **Generate output CSV:**  
+  Save the gaze data to the `videos/output/` folder.
+- **Optionally create visualizations:**  
+  (For example, generate or update heatmaps based on the new data.)
+- **Delete the video:**  
+  Remove the processed video file to prevent reprocessing.
+
+### Running the Monitor
+
+Run the monitoring script with the following command:
+
+```bash
+python monitor_videos.py --config path/to/your/config.yaml
+```
+
+> **Additional Notes:**
+> - The script uses the [watchdog](https://pypi.org/project/watchdog/) package to monitor the folder.
+> - Customize the input and output folder paths with the `--input_folder` and `--output_folder` arguments if needed.
+> - If desired, you can extend the script to update an interactive heatmap in real time.
+
+---
+
+## 8. Optional: Fine–Tuning Gaze Mapping
 
 - If you have paired calibration data (eye landmarks and click positions), refine the mapping by training a regression model:
   
@@ -169,7 +199,7 @@ pip install deeplabcut pyyaml tensorflow tensorpack tf-slim 'deeplabcut[gui]'
 
 ---
 
-## 8. Visualization
+## 9. Visualization
 
 - Generate visual summaries (heatmaps, fixation plots, etc.) from your gaze data:
 
@@ -177,9 +207,11 @@ pip install deeplabcut pyyaml tensorflow tensorpack tf-slim 'deeplabcut[gui]'
   python src/visualize.py --csv path/to/your_gaze_data.csv
   ```
 
+- For real–time visualization, you can integrate interactive plotting (using matplotlib’s interactive mode or a web dashboard framework) in your monitoring script.
+
 ---
 
-## 9. Data Loading and Final Verification
+## 10. Data Loading and Final Verification
 
 - Use `data_loader.py` to import gaze and touch event data for further analysis.
 - To verify that all required packages are installed correctly, run:
@@ -195,7 +227,7 @@ pip install deeplabcut pyyaml tensorflow tensorpack tf-slim 'deeplabcut[gui]'
 
 ---
 
-## 10. Troubleshooting
+## 11. Troubleshooting
 
 - **Model Issues:**  
   Double-check your DLC model path and configuration file location.
@@ -210,7 +242,7 @@ pip install deeplabcut pyyaml tensorflow tensorpack tf-slim 'deeplabcut[gui]'
 
 ---
 
-## 11. Future Improvements
+## 12. Future Improvements
 
 - **Enhanced Head–Pose Estimation:**  
   Further refine head pose calculations to improve gaze mapping.

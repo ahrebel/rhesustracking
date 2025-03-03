@@ -1,11 +1,14 @@
+# map_gaze_click.py
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
 def load_gaze_data(gaze_csv):
+    # Expecting columns: time, x, y, roll_angle, etc.
     return pd.read_csv(gaze_csv)
 
 def load_click_data(click_csv):
+    # Expecting columns: time, click_x, click_y
     return pd.read_csv(click_csv)
 
 def map_gaze_to_click(gaze_df, click_df, max_time_diff=0.1):
@@ -36,7 +39,7 @@ def map_gaze_to_click(gaze_df, click_df, max_time_diff=0.1):
 
 def plot_gaze_and_click(mapped_df):
     """
-    Plot gaze points over time (colored by time) and overlay click positions.
+    Plot gaze points (colored by timestamp) and overlay click positions.
     """
     plt.figure(figsize=(10, 6))
     # Plot gaze points
@@ -53,9 +56,9 @@ def plot_gaze_and_click(mapped_df):
     plt.show()
 
 if __name__ == "__main__":
-    # Replace with your actual file paths.
-    gaze_csv = "/path/to/your/gaze.csv"   # CSV produced by the video analysis (with timestamps)
-    click_csv = "/path/to/your/clicks.csv" # CSV containing your click events and their timestamps
+    # Replace these with your actual file paths.
+    gaze_csv = "/path/to/your/gaze.csv"   # CSV produced by the video analysis script
+    click_csv = "/path/to/your/clicks.csv" # CSV containing click events (columns: time, click_x, click_y)
 
     gaze_df = load_gaze_data(gaze_csv)
     click_df = load_click_data(click_csv)

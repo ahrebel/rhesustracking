@@ -1,3 +1,4 @@
+# calibrate.py
 import numpy as np
 import cv2
 import yaml
@@ -22,6 +23,13 @@ def load_touch_events(touch_file):
 def calibrate(eye_points, touch_points):
     """
     Compute a homography matrix from raw eye points to touch (screen) points.
+    
+    Args:
+        eye_points: List of (x, y) coordinates from eye tracking.
+        touch_points: Corresponding list of (x, y) screen touch points.
+    
+    Returns:
+        Homography matrix H.
     """
     eye_pts = np.array(eye_points, dtype=np.float32)
     touch_pts = np.array(touch_points, dtype=np.float32)
@@ -29,11 +37,13 @@ def calibrate(eye_points, touch_points):
     return H
 
 if __name__ == "__main__":
-    # Example: use the first 4 points from a touch file (e.g., videos/input/1.txt)
+    # Example usage:
+    # Assume the touch events file (e.g. 'videos/input/1.txt') has a header: timestamp,x,y
     touch_file = 'videos/input/1.txt'
-    touch_points = load_touch_events(touch_file)[:4]
+    touch_points = load_touch_events(touch_file)[:4]  # Using first 4 points for calibration
     
     # For demonstration, assume these are the corresponding eye points.
+    # In practice, these should come from your calibrated eye tracking data.
     eye_points = [(100, 100), (200, 100), (200, 200), (100, 200)]
     
     H = calibrate(eye_points, touch_points)
@@ -41,6 +51,10 @@ if __name__ == "__main__":
     print(H)
     
     # Save the calibration matrix.
-    np.save('data/trained_model/calibration_matrix_1.npy', H)
-    with open('data/trained_model/calibration_1.yaml', 'w') as f:
+    model_dir = 'data/trained_model'
+    if not os.path.exists(model_dir):
+        os.makedirs(model_dir, exist_ok=True)
+    
+    np.save(f'{model_dir}/calibration_matrix_1.npy', H)
+    with open(f'{model_dir}/calibration_1.yaml', 'w') as f:
         yaml.dump({'homography': H.tolist()}, f)

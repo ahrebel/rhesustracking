@@ -1,3 +1,4 @@
+# train_dlc_model.py
 #!/usr/bin/env python
 """
 This script trains the DeepLabCut model using the specified configuration.
@@ -31,4 +32,3 @@ def train_model():
 
 if __name__ == "__main__":
     train_model()
-

@@ -2,17 +2,16 @@
 
 ![Animated Eyes](https://github.com/user-attachments/assets/0f245b14-ec20-4a11-868a-ae207a7dfa1d)
 
-This repository implements an eye–tracking system for Rhesus macaques (and humans) using **DeepLabCut (DLC)**. The system detects eye and head landmarks from video frames, maps raw eye coordinates to screen positions via calibration, and analyzes gaze and fixation patterns during touchscreen interactions.
+This repository implements an eye–tracking system for Rhesus macaques (and humans) using **DeepLabCut (DLC)**. The system detects eye landmarks from video frames, maps raw eye coordinates to screen positions (via a trained regression model), and analyzes gaze/fixation patterns during touchscreen interactions.
 
 > **Key Features:**
 >
 > - **Offline Video Processing:** Analyze pre–recorded trial videos.
-> - **Real–Time Monitoring:** Automatically detect new videos in a designated folder, process them, and generate heatmaps.
-> - **DeepLabCut–Based Landmark Detection:** Use a trained DLC model to detect key eye landmarks.
-> - **Calibration & Gaze Mapping:** Compute a homography matrix and refine mapping via a regression model to accurately translate eye coordinates to screen coordinates.
-> - **Visualization:** Generate heatmaps and other visual summaries of gaze distribution.
+> - **DeepLabCut–Based Landmark Detection:** Use a trained DLC model to detect key eye landmarks (pupils and corners).
+> - **Gaze Mapping:** Use a trained regression model (optional) to accurately translate eye coordinates to screen coordinates.
+> - **Visualization:** Generate heatmaps and CSV summaries of time spent looking at each screen region.
 > - **Cross–Platform Support:** Runs on both macOS and Windows (CPU–only supported).
-> - **Enhanced Head–Pose Estimation:** Includes head roll estimation using facial landmarks.
+> - **Optional Head–Pose Estimation:** Includes head roll estimation using facial landmarks.
 
 ---
 
@@ -21,15 +20,13 @@ This repository implements an eye–tracking system for Rhesus macaques (and hum
 1. [Installation and Setup](#installation-and-setup)
 2. [Data Preparation](#data-preparation)
 3. [DeepLabCut Model Training](#deeplabcut-model-training)
-4. [Eye Detection Integration](#eye-detection-integration)
-5. [Calibration](#calibration)
-6. [Video Analysis](#video-analysis)
-7. [Real–Time Video Monitoring and Processing](#real-time-video-monitoring-and-processing)
-8. [Optional: Fine–Tuning Gaze Mapping](#optional-fine-tuning-gaze-mapping)
-9. [Visualization](#visualization)
-10. [Data Loading and Final Verification](#data-loading-and-final-verification)
-11. [Troubleshooting](#troubleshooting)
-12. [Future Improvements](#future-improvements)
+4. [Pipeline Overview](#pipeline-overview)
+5. [Video Processing (Extract Landmarks)](#video-processing-extract-landmarks)
+6. [Mapping Eye Landmarks to Screen Coordinates](#mapping-eye-landmarks-to-screen-coordinates)
+7. [Visualization (Heatmaps and Section Durations)](#visualization-heatmaps-and-section-durations)
+8. [Optional: Training a Gaze Mapping Model](#optional-training-a-gaze-mapping-model)
+9. [Troubleshooting](#troubleshooting)
+10. [Future Improvements](#future-improvements)
 
 ---
 
@@ -80,21 +77,11 @@ pip install deeplabcut pyyaml tensorflow tensorpack tf-slim 'deeplabcut[gui]'
 
 ## 2. Data Preparation
 
-### Video Files
+1. **Video Files**  
+   Place your trial videos (e.g., `1.mp4`, `2.mp4`, etc.) in a directory of your choice (for example, `videos/input/`).
 
-- Place your trial videos (e.g., `1.mp4`, `2.mp4`, etc.) in the `videos/input/` folder.
-
-### Touch Event Files
-
-- For each video, create a corresponding CSV file (e.g., `1.csv`) with the following header and format:
-  
-  ```csv
-  timestamp,x,y
-  2025-02-24T18:41:57.2864969-05:00,16,15
-  2025-02-24T18:41:58.6795674-05:00,34,25
-  ```
-  
-- Ensure timestamps are in ISO 8601 format.
+2. **(Optional) Touch Event Files**  
+   If you are using additional calibration data from touches or clicks, store them similarly (e.g., `1.csv`, `2.csv`) with columns like `timestamp, x, y`. This step is only necessary if you intend to do a separate homography calibration or advanced mapping.
 
 ---
 
@@ -110,149 +97,131 @@ pip install deeplabcut pyyaml tensorflow tensorpack tf-slim 'deeplabcut[gui]'
    - Enter your project name and add your video(s).
    - Label keypoints such as `left_pupil`, `right_pupil`, `corner_left`, and `corner_right`.
 
-3. **Label Frames:**
+3. **Label Frames:**  
    - Use a diverse set of frames (varying head positions, lighting, etc.).
 
-4. **Train the Network:**
+4. **Train the Network:**  
    - Use the **"Train Network"** option. For CPU-only systems, consider selecting a lighter model (e.g., `mobilenet_v2_1.0`).
 
-5. **Evaluate the Model:**
+5. **Evaluate the Model:**  
    - Run **"Evaluate Network"** to verify detection accuracy.
 
-6. **Update Config Path:**
-   - In `src/detect_eye_dlc.py`, set the `PROJECT_CONFIG` variable to point to your project's `config.yaml`.
+6. **Update Config Path:**  
+   - In your `detect_eye.py` (or similar script), set the path to your DLC project’s `config.yaml` so that it can locate your trained model.
 
 ---
 
-## 4. Eye Detection Integration
+## 4. Pipeline Overview
 
-- **DeepLabCut Detection:**  
-  The module in `src/detect_eye_dlc.py` processes each video frame with DLC to extract the four key landmarks, compute the eye's average coordinate, and estimate head roll.
+Below is the general workflow for analyzing a video and generating a gaze heatmap:
 
-- **Unified Interface:**  
-  The file `src/detect_eye.py` provides a simple alias to the DLC detection routine.
-
----
-
-## 5. Calibration
-
-- Run the calibration script to compute the homography mapping from raw eye coordinates to screen coordinates.  
-- **Command:**
-
-  ```bash
-  python src/calibrate.py
-  ```
-
-- Calibration uses touch event data and sample eye points, saving the resulting calibration files in `data/trained_model/`.
+1. **`process_video.py`** – Takes an input video and uses DLC to extract eye landmarks (pupils/corners). Outputs a CSV file with the raw landmark coordinates and timestamps.
+2. **`analyze_gaze.py`** – Takes the landmarks CSV plus a trained regression model, maps the landmarks to screen coordinates, splits the screen into sections, and outputs:
+   - A heatmap image showing how much time was spent looking at each screen region.
+   - A CSV summarizing time spent per region.
+3. **(Optional)** **`train_gaze_mapping.py`** – If you need to train a new regression model that converts eye landmarks into screen coordinates, run this script with your calibration/training data.
 
 ---
 
-## 6. Video Analysis
+## 5. Video Processing (Extract Landmarks)
 
-- Process your trial videos to extract gaze data:
-  
-  ```bash
-  python src/analyze_video.py --video path/to/video.mp4 --config path/to/your/config.yaml --output path/to/output.csv
-  ```
-
-- This script processes each frame with DLC, calculates timestamps based on video FPS, and outputs a CSV containing columns for frame number, timestamp, eye x/y coordinates, and head roll.
-
----
-
-## 7. Real–Time Video Monitoring and Processing
-
-To automate analysis and visualization, use the new monitoring script. This script continuously watches the `videos/input/` folder for new video files. When a new video is detected, it will:
-
-- **Process the video:**  
-  Run the analysis (via `src/analyze_video.py`) to extract gaze data.
-- **Generate output CSV:**  
-  Save the gaze data to the `videos/output/` folder.
-- **Optionally create visualizations:**  
-  (For example, generate or update heatmaps based on the new data.)
-- **Delete the video:**  
-  Remove the processed video file to prevent reprocessing.
-
-### Running the Monitor
-
-Run the monitoring script with the following command:
+Use **`process_video.py`** to process your video:
 
 ```bash
-python monitor_videos.py --config path/to/your/config.yaml
+python process_video.py \
+    --video path/to/video.mp4 \
+    --config path/to/dlc_config.yaml \
+    --output landmarks_output.csv
 ```
 
-> **Additional Notes:**
-> - The script uses the [watchdog](https://pypi.org/project/watchdog/) package to monitor the folder.
-> - Customize the input and output folder paths with the `--input_folder` and `--output_folder` arguments if needed.
-> - If desired, you can extend the script to update an interactive heatmap in real time.
+- **`--video`**: Path to your input video.  
+- **`--config`**: Path to the DLC `config.yaml` file (from your trained project).  
+- **`--output`**: Desired path for the output CSV of raw landmarks.
+
+This script calls **`detect_eye.py`**, which:
+- Loads each frame
+- Temporarily writes it to a mini video
+- Runs DeepLabCut analysis to detect `left_pupil`, `right_pupil`, `corner_left`, and `corner_right`
+- (Optionally) computes head roll if you have a camera matrix and want that data
+- Returns a CSV with columns like `left_pupil_x, left_pupil_y, right_pupil_x, right_pupil_y, corner_left_x, corner_left_y, corner_right_x, corner_right_y, roll_angle, time`, etc.
 
 ---
 
-## 8. Optional: Fine–Tuning Gaze Mapping
+## 6. Mapping Eye Landmarks to Screen Coordinates
 
-- If you have paired calibration data (eye landmarks and click positions), refine the mapping by training a regression model:
-  
-  ```bash
-  python src/train_gaze_mapping.py --data path/to/your_training_data.csv
-  ```
-
-- This step creates a continuous mapping from eye features to screen coordinates and saves the regression model (for example, as a pickle file).
+After extracting the raw landmarks, you can map them to actual screen coordinates (e.g., if your screen is 1920×1080). This step requires a **trained regression model** or other mapping approach. By default, we provide a sample approach in **`train_gaze_mapping.py`** (see [Optional: Training a Gaze Mapping Model](#optional-training-a-gaze-mapping-model)).
 
 ---
 
-## 9. Visualization
+## 7. Visualization (Heatmaps and Section Durations)
 
-- Generate visual summaries (heatmaps, fixation plots, etc.) from your gaze data:
+Use **`analyze_gaze.py`** to convert raw landmark CSVs into a heatmap and CSV summary of time spent per screen region:
 
-  ```bash
-  python src/visualize.py --csv path/to/your_gaze_data.csv
-  ```
+```bash
+python analyze_gaze.py \
+    --landmarks_csv landmarks_output.csv \
+    --model gaze_mapping_model.pkl \
+    --screen_width 1920 \
+    --screen_height 1080 \
+    --n_cols 3 \
+    --n_rows 3 \
+    --output_heatmap gaze_heatmap.png \
+    --output_sections section_durations.csv
+```
 
-- For real–time visualization, you can integrate interactive plotting (using matplotlib’s interactive mode or a web dashboard framework) in your monitoring script.
+- **`--landmarks_csv`**: The CSV from `process_video.py`.  
+- **`--model`**: A pickle file containing your trained regression model (see below).  
+- **`--screen_width`** / **`--screen_height`**: Dimensions of your screen or area of interest.  
+- **`--n_cols`** / **`--n_rows`**: How many columns/rows to split the screen into.  
+- **`--output_heatmap`**: Path to save the generated heatmap image.  
+- **`--output_sections`**: Path to save a CSV summarizing how long (in seconds) you spent in each screen section.
 
----
-
-## 10. Data Loading and Final Verification
-
-- Use `data_loader.py` to import gaze and touch event data for further analysis.
-- To verify that all required packages are installed correctly, run:
-
-  ```bash
-  python -c "import tables, deeplabcut; print('Installation successful')"
-  ```
-
-  You should see:
-  ```
-  Installation successful
-  ```
-
----
-
-## 11. Troubleshooting
-
-- **Model Issues:**  
-  Double-check your DLC model path and configuration file location.
-- **Calibration Errors:**  
-  Verify that your touch event files are properly formatted and that the timestamps match your video analysis output.
-- **Performance Concerns:**  
-  Reduce video resolution or consider using a lighter network for CPU-only setups.
-- **Dependency Issues:**  
-  Ensure all package versions meet the requirements listed in `requirements.txt`.
-- **TensorFlow Errors:**  
-  If you see `ModuleNotFoundError: No module named 'keras.legacy_tf_layers'`, update your TensorFlow installation as shown in the Installation section.
+This script:
+1. Loads the CSV of raw landmarks.
+2. Applies the trained model to each frame to get `(screen_x, screen_y)` gaze points.
+3. Splits the screen into a grid (`section_mapping.py`).
+4. Aggregates how many frames (or seconds) were spent in each region.
+5. Saves a heatmap and a CSV listing time spent in each region.
 
 ---
 
-## 12. Future Improvements
+## 8. Optional: Training a Gaze Mapping Model
 
-- **Enhanced Head–Pose Estimation:**  
-  Further refine head pose calculations to improve gaze mapping.
-- **Learning-Based Gaze Mapping:**  
-  Implement a continuously learning module for adaptive calibration.
-- **Advanced Visualization Tools:**  
-  Develop dynamic heatmaps and more detailed fixation analysis reports.
+If you don’t already have a regression model that maps `(pupil_x, pupil_y, corners, etc.)` to screen coordinates, you can create one with **`train_gaze_mapping.py`**:
+
+```bash
+python train_gaze_mapping.py \
+    --data path/to/training_data.csv \
+    --output data/trained_model/gaze_mapping_model.pkl
+```
+
+- Your CSV should include columns for the raw eye landmarks plus the known screen coordinates at each sample (i.e., ground truth).
+- Once trained, you can reference the resulting `gaze_mapping_model.pkl` in `analyze_gaze.py`.
 
 ---
 
-Happy tracking!
+## 9. Troubleshooting
 
-Feel free to open an issue or submit a pull request if you have suggestions or encounter any problems.
+- **Model Issues / DLC Not Detecting Landmarks Properly:**
+  - Verify that your `config.yaml` is correct and your DLC project is fully trained.
+- **Mapping Accuracy Problems:**
+  - Check that the data used to train your regression model covers a sufficient range of head poses and gaze positions.
+- **Dependency Issues:**
+  - Ensure all package versions match those listed in `requirements.txt`.
+- **TensorFlow or Keras Errors:**
+  - If you see `ModuleNotFoundError: No module named 'keras.legacy_tf_layers'`, upgrade TensorFlow as shown in [Installation and Setup](#installation-and-setup).
+
+---
+
+## 10. Future Improvements
+
+- **Enhanced Head–Pose Estimation:**
+  - Refine the head pose calculations or incorporate more 3D facial landmarks to improve accuracy.
+- **Adaptive Gaze Mapping:**
+  - Implement an online or continuously updated calibration procedure.
+- **Advanced Visualization Tools:**
+  - Develop dynamic or interactive dashboards to visualize fixations and heatmaps in real time.
+
+---
+
+**Happy tracking!**  

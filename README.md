@@ -26,8 +26,9 @@ This repository implements an eye–tracking system for Rhesus macaques (and hum
 7. [Step 3: Train the Gaze Mapping Model](#step-3-train-the-gaze-mapping-model)  
 8. [Step 4: Process Experimental Videos (Extract Landmarks)](#step-4-process-experimental-videos-extract-landmarks)  
 9. [Step 5: Analyze Gaze (Generate Heatmaps & Time Spent)](#step-5-analyze-gaze-generate-heatmaps--time-spent)  
-10. [Troubleshooting](#troubleshooting)  
-11. [Future Improvements](#future-improvements)
+10. [Fine-Tuning or Retraining the Regression Model](#fine-tuning-or-retraining-the-regression-model)  
+11. [Troubleshooting](#troubleshooting)  
+12. [Future Improvements](#future-improvements)
 
 ---
 
@@ -138,38 +139,38 @@ You need a **calibration video** in which you know the actual screen coordinates
        --output calibration_landmarks.csv
    ```
 
-   i.e.
+   **Example**:
    ```bash
    python src/process_video.py \
-    --video /Users/anthonyrebello/rhesustracking/videos/input/3.mp4 \
-    --config /Users/anthonyrebello/rhesustracking/eyetracking-ahrebel-2025-02-26/config.yaml \
-    --output landmarks_output.csv
-```
+       --video /Users/anthonyrebello/rhesustracking/videos/input/3.mp4 \
+       --config /Users/anthonyrebello/rhesustracking/eyetracking-ahrebel-2025-02-26/config.yaml \
+       --output landmarks_output.csv
+   ```
 
    - This outputs a CSV with columns like `frame, time, left_pupil_x, left_pupil_y, right_pupil_x, right_pupil_y, corner_left_x, corner_left_y, corner_right_x, corner_right_y, roll_angle, ...`
 
 ---
 
-## 6. Step 2: Merge Gaze Data with Click Data
+## 6. Step 2: (Optional) Merge Gaze Data with Click Data
 
-If your known screen coordinates come from **click events** (or touches) at specific times, you can merge them with the raw gaze data (landmarks) by matching timestamps. 
+If your known screen coordinates come from **click events** (or touches) at specific times, you can merge them with the raw gaze data (landmarks) by matching timestamps.
 
-#### Usage
+**Example** usage:
 ```bash
-python src/combine_gaze_click.py \
-  --gaze_csv calibration_landmarks.csv \
-  --click_file calibration_clicks.csv \
-  --output_csv calibration_data_for_training.csv \
-  --max_time_diff 0.1
-```
-
-   i.e.
-   ```bash
 python src/combine_gaze_click.py \
   --gaze_csv landmarks_output.csv \
   --click_file /Users/anthonyrebello/rhesustracking/videos/input/3.txt \
   --output_csv calibration_data_for_training.csv \
   --max_time_diff 0.1
+```
+
+After merging, your final calibration CSV should have columns:
+```
+left_corner_x, left_corner_y,
+right_corner_x, right_corner_y,
+left_pupil_x, left_pupil_y,
+right_pupil_x, right_pupil_y,
+screen_x, screen_y
 ```
 
 ---
@@ -179,22 +180,12 @@ python src/combine_gaze_click.py \
 Once you have a **calibration CSV** that includes both **eye landmarks** and **true screen coordinates**, you can train the regression model:
 
 ```bash
-python train_gaze_mapping.py \
+python src/train_gaze_mapping.py \
     --data calibration_data_for_training.csv \
     --output data/trained_model/gaze_mapping_model.pkl
 ```
 
-Your final calibration CSV should have columns:
-
-```
-left_corner_x, left_corner_y,
-right_corner_x, right_corner_y,
-left_pupil_x, left_pupil_y,
-right_pupil_x, right_pupil_y,
-screen_x, screen_y
-```
-
-The training script will produce a `.pkl` file containing the trained mapping model.
+This script produces a `.pkl` file containing the trained mapping model.
 
 ---
 
@@ -203,7 +194,7 @@ The training script will produce a `.pkl` file containing the trained mapping mo
 Now that you have a **trained DLC model** (for detecting landmarks) **and** a **trained regression model** (for mapping landmarks to screen coords), you can process your actual experimental videos:
 
 ```bash
-python process_video.py \
+python src/process_video.py \
     --video /path/to/experimental_video.mp4 \
     --config /path/to/dlc_config.yaml \
     --output landmarks_output.csv
@@ -221,7 +212,7 @@ Finally, use **`analyze_gaze.py`** to map the raw landmark CSV into actual scree
 2. A CSV summarizing **time spent** in each region.
 
 ```bash
-python analyze_gaze.py \
+python src/analyze_gaze.py \
     --landmarks_csv landmarks_output.csv \
     --model data/trained_model/gaze_mapping_model.pkl \
     --screen_width 1920 \
@@ -248,7 +239,30 @@ This script:
 
 ---
 
-## 10. Troubleshooting
+## 10. Fine-Tuning or Retraining the Regression Model
+
+After training your initial regression model, you might gather **additional** calibration data over time. There are two common ways to incorporate new data:
+
+1. **Retrain from Scratch with Combined Data**  
+   - **Combine** your original calibration data and your new data into a single, larger CSV (with the same columns).  
+   - **Run** the training script again, pointing it to the combined CSV:
+     ```bash
+     python src/train_gaze_mapping.py \
+         --data combined_calibration_data.csv \
+         --output data/trained_model/gaze_mapping_model.pkl
+     ```
+   - This method typically yields robust results because the model sees **all** data at once, reinforcing what it already learned while integrating the new examples.
+
+2. **Incremental Training / Fine‐Tuning**  
+   - If your model (e.g., a PyTorch or scikit‐learn estimator) supports **incremental learning** (like a `partial_fit` method), you can load the existing model and continue training only on the new data.  
+   - For a small neural network in PyTorch, you can load the saved `state_dict` and run more training epochs using only the new data or a mix of old + new data.  
+   - This approach can be faster if your dataset is very large or if you only have a small batch of new data. However, you have to be careful about **catastrophic forgetting** (where the model “forgets” earlier data if it only sees new data).
+
+For many use cases, **method #1** (retraining from scratch with combined data) is simpler and safer. But if your dataset grows large, or you want real‐time updates, partial or online training can be used.
+
+---
+
+## 11. Troubleshooting
 
 - **Model Issues / DLC Not Detecting Landmarks Properly:**
   - Verify that your `config.yaml` is correct and your DLC project is fully trained.
@@ -262,7 +276,7 @@ This script:
 
 ---
 
-## 11. Future Improvements
+## 12. Future Improvements
 
 - **Enhanced Head–Pose Estimation:**
   - Refine the head pose calculations or incorporate more 3D facial landmarks to improve accuracy.

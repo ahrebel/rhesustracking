@@ -1,9 +1,0 @@
-﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
-<Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
-    <Import Project="$(NuGetPackageRoot)system.text.json\9.0.0\buildTransitive\net8.0\System.Text.Json.targets" Condition="Exists('$(NuGetPackageRoot)system.text.json\9.0.0\buildTransitive\net8.0\System.Text.Json.targets')" />
-    <Import Project="$(NuGetPackageRoot)accord\3.8.0\build\Accord.targets" Condition="Exists('$(NuGetPackageRoot)accord\3.8.0\build\Accord.targets')" />
-    <Import Project="$(NuGetPackageRoot)accord.video.ffmpeg.x64\3.8.0\build\Accord.Video.FFMPEG.x64.targets" Condition="Exists('$(NuGetPackageRoot)accord.video.ffmpeg.x64\3.8.0\build\Accord.Video.FFMPEG.x64.targets')" />
-    <Import Project="$(NuGetPackageRoot)accord.video.ffmpeg\3.8.0\build\Accord.Video.FFMPEG.targets" Condition="Exists('$(NuGetPackageRoot)accord.video.ffmpeg\3.8.0\build\Accord.Video.FFMPEG.targets')" />
-  </ImportGroup>
-</Project>

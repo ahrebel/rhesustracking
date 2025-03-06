@@ -1,7 +1,3 @@
-Below is the **complete README** (including all previous information) **plus** an **additional Python script** (`combine_gaze_click.py`) that merges raw gaze data (eye landmarks) with click data (screen coordinates) to produce the **calibration CSV** needed for training your gaze‐mapping model.
-
----
-
 # Rhesus Macaque Gaze Tracker (DeepLabCut)
 
 ![Animated Eyes](https://github.com/user-attachments/assets/0f245b14-ec20-4a11-868a-ae207a7dfa1d)
@@ -261,5 +257,3 @@ This script:
 ---
 
 **Happy tracking!**  
-
-Feel free to open an issue or submit a pull request if you have suggestions or encounter any problems.

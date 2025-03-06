@@ -138,6 +138,14 @@ You need a **calibration video** in which you know the actual screen coordinates
        --output calibration_landmarks.csv
    ```
 
+   i.e.
+   ```bash
+   python src/process_video.py \
+    --video /Users/anthonyrebello/rhesustracking/videos/input/3.mp4 \
+    --config /Users/anthonyrebello/rhesustracking/eyetracking-ahrebel-2025-02-26/config.yaml \
+    --output landmarks_output.csv
+```
+
    - This outputs a CSV with columns like `frame, time, left_pupil_x, left_pupil_y, right_pupil_x, right_pupil_y, corner_left_x, corner_left_y, corner_right_x, corner_right_y, roll_angle, ...`
 
 ---
@@ -151,6 +159,15 @@ If your known screen coordinates come from **click events** (or touches) at spec
 python src/combine_gaze_click.py \
   --gaze_csv calibration_landmarks.csv \
   --click_file calibration_clicks.csv \
+  --output_csv calibration_data_for_training.csv \
+  --max_time_diff 0.1
+```
+
+   i.e.
+   ```bash
+python src/combine_gaze_click.py \
+  --gaze_csv landmarks_output.csv \
+  --click_file /Users/anthonyrebello/rhesustracking/videos/input/3.txt \
   --output_csv calibration_data_for_training.csv \
   --max_time_diff 0.1
 ```

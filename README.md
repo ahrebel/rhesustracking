@@ -132,7 +132,7 @@ You need a **calibration video** in which you know the actual screen coordinates
 2. **Run `process_video.py`** on this calibration video to extract raw landmarks:
 
    ```bash
-   python process_video.py \
+   python src/process_video.py \
        --video /path/to/calibration_video.mp4 \
        --config /path/to/dlc_config.yaml \
        --output calibration_landmarks.csv
@@ -148,9 +148,9 @@ If your known screen coordinates come from **click events** (or touches) at spec
 
 #### Usage
 ```bash
-python combine_gaze_click.py \
+python src/combine_gaze_click.py \
   --gaze_csv calibration_landmarks.csv \
-  --click_csv calibration_clicks.csv \
+  --click_file calibration_clicks.csv \
   --output_csv calibration_data_for_training.csv \
   --max_time_diff 0.1
 ```

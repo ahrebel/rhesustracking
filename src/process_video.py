@@ -3,6 +3,11 @@ import cv2
 import os
 import pandas as pd
 from detect_eye import detect_eye_and_landmarks
+import warnings
+warnings.filterwarnings(
+    "ignore",
+    message="`layer.apply` is deprecated and will be removed in a future version."
+)
 
 def process_video(video_path, config_path, output_csv_path):
     """

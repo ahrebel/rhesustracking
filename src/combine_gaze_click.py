@@ -21,6 +21,8 @@ Output CSV will have columns:
     left_pupil_x, left_pupil_y, right_pupil_x, right_pupil_y,
     screen_x, screen_y
 
+If the output CSV already exists, new matches are **appended** to the existing file.
+
 Usage Example:
     python combine_gaze_click.py \
         --gaze_csv landmarks_output.csv \
@@ -32,6 +34,7 @@ Usage Example:
 import argparse
 import pandas as pd
 import numpy as np
+import os
 
 def parse_time_column(df, time_col='time'):
     """
@@ -100,6 +103,8 @@ def combine_gaze_click(gaze_csv, click_file, output_csv, max_time_diff=0.05):
         left_corner_x, left_corner_y, right_corner_x, right_corner_y,
         left_pupil_x, left_pupil_y, right_pupil_x, right_pupil_y,
         screen_x, screen_y
+
+    If output_csv already exists, new matches are appended to it.
     """
     # Load the gaze data
     gaze_df = pd.read_csv(gaze_csv)
@@ -153,9 +158,19 @@ def combine_gaze_click(gaze_csv, click_file, output_csv, max_time_diff=0.05):
         print("No matching rows found. Check your time columns or max_time_diff.")
         return
     
-    combined_df = pd.DataFrame(combined_rows)
-    combined_df.to_csv(output_csv, index=False)
-    print(f"Combined calibration data saved to {output_csv}")
+    # Create DataFrame of new matches
+    new_matches_df = pd.DataFrame(combined_rows)
+    
+    # If output file already exists, append to it
+    if os.path.exists(output_csv):
+        existing_df = pd.read_csv(output_csv)
+        # Concatenate old + new
+        combined_df = pd.concat([existing_df, new_matches_df], ignore_index=True)
+        combined_df.to_csv(output_csv, index=False)
+        print(f"Appended {len(new_matches_df)} new rows to existing file '{output_csv}'.")
+    else:
+        new_matches_df.to_csv(output_csv, index=False)
+        print(f"Combined calibration data saved to new file '{output_csv}'.")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Combine gaze data with click/touch data for calibration.")
@@ -164,7 +179,7 @@ if __name__ == "__main__":
     parser.add_argument("--click_file", required=True,
                         help="File (CSV or TXT) with 'timestamp,x,y' columns to be merged")
     parser.add_argument("--output_csv", required=True,
-                        help="Where to save the merged calibration CSV")
+                        help="Where to save the merged calibration CSV (appends if file exists)")
     parser.add_argument("--max_time_diff", type=float, default=0.05,
                         help="Max time difference (in seconds) for matching gaze to clicks")
     args = parser.parse_args()

@@ -1,3 +1,4 @@
+
 # Rhesus Macaque Gaze Tracker (DeepLabCut)
 
 ![Animated Eyes](https://github.com/user-attachments/assets/0f245b14-ec20-4a11-868a-ae207a7dfa1d)
@@ -135,7 +136,7 @@ You need a **calibration video** in which you know the actual screen coordinates
    ```bash
    python src/process_video.py \
        --video /path/to/calibration_video.mp4 \
-       --config /eyetracking-ahrebel-2025-02-26/config.yaml \
+       --config /path/to/dlc_config.yaml \
        --output calibration_landmarks.csv
    ```
 
@@ -196,7 +197,7 @@ Now that you have a **trained DLC model** (for detecting landmarks) **and** a **
 ```bash
 python src/process_video.py \
     --video /path/to/experimental_video.mp4 \
-    --config /eyetracking-ahrebel-2025-02-26/config.yaml \
+    --config /path/to/dlc_config.yaml \
     --output landmarks_output.csv
 ```
 
@@ -214,7 +215,7 @@ Finally, use **`analyze_gaze.py`** to map the raw landmark CSV into actual scree
 ```bash
 python src/analyze_gaze.py \
     --landmarks_csv landmarks_output.csv \
-    --model /data/trained_model/gaze_mapping_model.pkl \
+    --model data/trained_model/gaze_mapping_model.pkl \
     --screen_width 1920 \
     --screen_height 1080 \
     --n_cols 3 \

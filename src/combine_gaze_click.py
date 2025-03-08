@@ -172,6 +172,11 @@ def combine_gaze_click(gaze_csv, click_file, output_csv, max_time_diff=0.05):
         new_matches_df.to_csv(output_csv, index=False)
         print(f"Combined calibration data saved to new file '{output_csv}'.")
 
+    # Scale the screen_x and screen_y columns by 2
+    new_matches_df['screen_x'] /= 2
+    new_matches_df['screen_y'] /= 2
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Combine gaze data with click/touch data for calibration.")
     parser.add_argument("--gaze_csv", required=True,

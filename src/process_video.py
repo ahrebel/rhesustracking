@@ -1,9 +1,9 @@
-# process_video.py
+#!/usr/bin/env python
 import cv2
 import os
 import pandas as pd
-from detect_eye import detect_eye_and_landmarks
 import warnings
+from detect_eye import detect_eye_and_landmarks
 warnings.filterwarnings(
     "ignore",
     message="`layer.apply` is deprecated and will be removed in a future version."

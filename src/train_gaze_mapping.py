@@ -20,12 +20,20 @@ class EyeToScreenNet(nn.Module):
         return self.model(x)
 
 def load_calibration_data(csv_path):
-    # Expects columns: left_corner_x, left_corner_y, right_corner_x, right_corner_y,
-    # left_pupil_x, left_pupil_y, right_pupil_x, right_pupil_y, screen_x, screen_y
+    """
+    Expects columns:
+        corner_left_x, corner_left_y,
+        corner_right_x, corner_right_y,
+        left_pupil_x,  left_pupil_y,
+        right_pupil_x, right_pupil_y,
+        screen_x,      screen_y
+    """
     df = pd.read_csv(csv_path)
     X_calib = df[[
-        'left_corner_x','left_corner_y','right_corner_x','right_corner_y',
-        'left_pupil_x','left_pupil_y','right_pupil_x','right_pupil_y'
+        'corner_left_x','corner_left_y',
+        'corner_right_x','corner_right_y',
+        'left_pupil_x','left_pupil_y',
+        'right_pupil_x','right_pupil_y'
     ]].values
     Y_calib = df[['screen_x','screen_y']].values
     return X_calib, Y_calib
@@ -44,20 +52,24 @@ def train_eye_to_screen_net(X_calib, Y_calib, epochs=2000, lr=0.001):
         loss = criterion(outputs, Y_tensor)
         loss.backward()
         optimizer.step()
+        
         if (epoch + 1) % 100 == 0:
             print(f"Epoch [{epoch+1}/{epochs}], Loss: {loss.item():.4f}")
+    
     return model
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data", required=True)
-    parser.add_argument("--output", default="gaze_mapping_model.pth")
-    parser.add_argument("--epochs", type=int, default=2000)
-    parser.add_argument("--lr", type=float, default=0.001)
+    parser.add_argument("--data", required=True, help="Path to CSV containing calibration data")
+    parser.add_argument("--output", default="gaze_mapping_model.pth", help="Path to output the trained model")
+    parser.add_argument("--epochs", type=int, default=2000, help="Number of training epochs")
+    parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
     args = parser.parse_args()
     
     X_calib, Y_calib = load_calibration_data(args.data)
     model = train_eye_to_screen_net(X_calib, Y_calib, args.epochs, args.lr)
+    
+    # Make sure the directory structure for the output path exists
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
     torch.save(model.state_dict(), args.output)
     print(f"Model saved to {args.output}")

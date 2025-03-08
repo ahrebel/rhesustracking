@@ -1,7 +1,3 @@
-Below is your **updated README** with an **additional section** describing **how to ensure your screen dimensions are correct** when recording clicks (especially if using a Retina display on macOS or a maximized form on Windows). This helps align your recorded click coordinates with the resolution you pass to your Python scripts.
-
----
-
 # Rhesus Macaque Gaze Tracker (DeepLabCut)
 
 ![Animated Eyes](https://github.com/user-attachments/assets/0f245b14-ec20-4a11-868a-ae207a7dfa1d)

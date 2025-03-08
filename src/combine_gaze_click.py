@@ -1,5 +1,36 @@
 #!/usr/bin/env python
 
+"""
+Combine gaze data (eye landmarks) with click/touch data (known screen coordinates)
+based on matching timestamps within a certain tolerance.
+
+- Gaze CSV must have columns (adjust if needed):
+    time, corner_left_x, corner_left_y, corner_right_x, corner_right_y,
+          left_pupil_x, left_pupil_y, right_pupil_x, right_pupil_y
+
+- Click file can be .csv or .txt, with columns:
+    timestamp,x,y
+  (We'll rename 'timestamp' -> 'time', 'x' -> 'screen_x', 'y' -> 'screen_y'.)
+
+We parse any non-numeric time columns as datetimes and convert them to "seconds from
+the earliest time in that file". The script then matches each click row to the nearest
+gaze row within `max_time_diff` seconds.
+
+Output CSV will have columns:
+    time, left_corner_x, left_corner_y, right_corner_x, right_corner_y,
+    left_pupil_x, left_pupil_y, right_pupil_x, right_pupil_y,
+    screen_x, screen_y
+
+If the output CSV already exists and is non-empty, new matches are appended to the existing file.
+
+Usage Example:
+    python combine_gaze_click.py \
+        --gaze_csv landmarks_output.csv \
+        --click_file /Users/anthonyrebello/rhesustracking/videos/input/3.txt \
+        --output_csv calibration_data_for_training.csv \
+        --max_time_diff 0.1
+"""
+
 import argparse
 import pandas as pd
 import numpy as np
@@ -7,10 +38,10 @@ import os
 
 def parse_time_column(df, time_col='time'):
     """
-    Attempt to parse the given 'time_col' in df.
-    - If it's already numeric, keep it as-is (float).
-    - Otherwise, parse as datetime and convert to seconds from the earliest time in df.
-    Returns the DataFrame with a new column 'time_sec' that is float.
+    Parse the given 'time_col' in df.
+    - If numeric, convert to float.
+    - Otherwise, parse as datetime and convert to seconds from the earliest time.
+    Returns df with a new column 'time_sec'.
     """
     if df[time_col].dtype.kind in ('i', 'f'):
         df['time_sec'] = df[time_col].astype(float)
@@ -24,9 +55,8 @@ def parse_time_column(df, time_col='time'):
 
 def load_click_data(click_path):
     """
-    Load a click/touch file (CSV or TXT), containing columns: timestamp,x,y.
-    We'll rename them to: time, screen_x, screen_y.
-    Then parse the time column into numeric seconds in 'time_sec'.
+    Load a click/touch file (CSV or TXT) with columns: timestamp,x,y.
+    Rename them to: time, screen_x, screen_y, then parse 'time' into 'time_sec'.
     """
     df = pd.read_csv(click_path, delimiter=',', header=0)
     rename_map = {}
@@ -46,23 +76,23 @@ def load_click_data(click_path):
 
 def combine_gaze_click(gaze_csv, click_file, output_csv, max_time_diff=0.05):
     """
-    Merges gaze data with click data by matching each click to the nearest
-    gaze entry in time, if within max_time_diff seconds.
+    Merge gaze and click data by matching each click to the nearest gaze entry
+    in time (within max_time_diff seconds).
     
     Gaze CSV must have columns:
         time, corner_left_x, corner_left_y, corner_right_x, corner_right_y,
               left_pupil_x, left_pupil_y, right_pupil_x, right_pupil_y.
-    The script parses the 'time' column into 'time_sec'.
+    Its 'time' column is parsed into 'time_sec'.
     
-    Click file must have columns: time, screen_x, screen_y (after renaming).
-    Its 'time' column is also parsed into 'time_sec'.
+    Click file (after renaming) must have:
+        time, screen_x, screen_y, with 'time' parsed into 'time_sec'.
     
     Output CSV will have:
-        left_corner_x, left_corner_y, right_corner_x, right_corner_y,
+        time, left_corner_x, left_corner_y, right_corner_x, right_corner_y,
         left_pupil_x, left_pupil_y, right_pupil_x, right_pupil_y,
         screen_x, screen_y.
     
-    If output_csv already exists and is non-empty, new matches are appended.
+    If output_csv exists and is non-empty, new matches are appended.
     """
     gaze_df = pd.read_csv(gaze_csv)
     required_gaze_cols = [
@@ -87,16 +117,17 @@ def combine_gaze_click(gaze_csv, click_file, output_csv, max_time_diff=0.05):
         closest_idx = (np.abs(candidates['time_sec'] - click_time_sec)).idxmin()
         best_match = gaze_df.loc[closest_idx]
         combined_rows.append({
-            'left_corner_x':  best_match['corner_left_x'],
-            'left_corner_y':  best_match['corner_left_y'],
-            'right_corner_x': best_match['corner_right_x'],
-            'right_corner_y': best_match['corner_right_y'],
-            'left_pupil_x':   best_match['left_pupil_x'],
-            'left_pupil_y':   best_match['left_pupil_y'],
-            'right_pupil_x':  best_match['right_pupil_x'],
-            'right_pupil_y':  best_match['right_pupil_y'],
-            'screen_x':       click_row['screen_x'],
-            'screen_y':       click_row['screen_y']
+            'time': best_match['time'],
+            'left_corner_x': best_match['corner_left_x'],   # Rename: corner_left_x -> left_corner_x
+            'left_corner_y': best_match['corner_left_y'],       # Rename: corner_left_y -> left_corner_y
+            'right_corner_x': best_match['corner_right_x'],     # Rename: corner_right_x -> right_corner_x
+            'right_corner_y': best_match['corner_right_y'],     # Rename: corner_right_y -> right_corner_y
+            'left_pupil_x': best_match['left_pupil_x'],
+            'left_pupil_y': best_match['left_pupil_y'],
+            'right_pupil_x': best_match['right_pupil_x'],
+            'right_pupil_y': best_match['right_pupil_y'],
+            'screen_x': click_row['screen_x'],
+            'screen_y': click_row['screen_y']
         })
     
     if not combined_rows:
@@ -122,14 +153,14 @@ def combine_gaze_click(gaze_csv, click_file, output_csv, max_time_diff=0.05):
         new_matches_df.to_csv(output_csv, index=False)
         print(f"Combined calibration data saved to new file '{output_csv}'.")
     
-    # Scale the screen_x and screen_y columns by 2
+    # (Optional) Scale the screen_x and screen_y columns by 2 if desired
     new_matches_df['screen_x'] /= 2
     new_matches_df['screen_y'] /= 2
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Combine gaze data with click/touch data for calibration.")
     parser.add_argument("--gaze_csv", required=True,
-                        help="CSV file with raw eye landmarks (must include a 'time' column)")
+                        help="CSV file with raw eye landmarks (must include a 'time' column and expected column names)")
     parser.add_argument("--click_file", required=True,
                         help="File (CSV or TXT) with 'timestamp,x,y' columns to be merged")
     parser.add_argument("--output_csv", required=True,

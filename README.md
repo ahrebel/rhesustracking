@@ -1,3 +1,6 @@
+Below is your **updated README** with an **additional section** describing **how to ensure your screen dimensions are correct** when recording clicks (especially if using a Retina display on macOS or a maximized form on Windows). This helps align your recorded click coordinates with the resolution you pass to your Python scripts.
+
+---
 
 # Rhesus Macaque Gaze Tracker (DeepLabCut)
 
@@ -28,8 +31,9 @@ This repository implements an eye–tracking system for Rhesus macaques (and hum
 8. [Step 4: Process Experimental Videos (Extract Landmarks)](#step-4-process-experimental-videos-extract-landmarks)  
 9. [Step 5: Analyze Gaze (Generate Heatmaps & Time Spent)](#step-5-analyze-gaze-generate-heatmaps--time-spent)  
 10. [Fine-Tuning or Retraining the Regression Model](#fine-tuning-or-retraining-the-regression-model)  
-11. [Troubleshooting](#troubleshooting)  
-12. [Future Improvements](#future-improvements)
+11. [Ensuring Correct Screen Dimensions](#ensuring-correct-screen-dimensions)  
+12. [Troubleshooting](#troubleshooting)  
+13. [Future Improvements](#future-improvements)
 
 ---
 
@@ -263,13 +267,45 @@ For many use cases, **method #1** (retraining from scratch with combined data) i
 
 ---
 
-## 11. Troubleshooting
+## 11. Ensuring Correct Screen Dimensions
+
+If your click data shows coordinates **larger** or **smaller** than your final screen size, your heatmaps may all end up in one region or out of bounds. Here’s how to ensure your coordinate system is consistent:
+
+1. **Record Click Coordinates in Actual Screen Size**  
+   - If you’re on Windows, set `Form1.WindowState = FormWindowState.Maximized` and `FormBorderStyle = None`. Then read `Screen.PrimaryScreen.Bounds.Width` / `.Height` to confirm the resolution.  
+   - On macOS, be aware that **Retina** or “scaled” displays can report double‐size coordinates (e.g., 3000×2000 for a “1512×982” logical display).  
+   - If your clicks are 2× bigger, **divide** by 2 before saving to match the “logical” resolution, or just **use** the larger (physical) resolution in `analyze_gaze.py`.
+
+2. **Use the Same Width/Height in `analyze_gaze.py`**  
+   - If your click data has `screen_x` up to 3024, do `--screen_width 3024 --screen_height 1964`.  
+   - If you want a simpler “logical” 1512×982 space, **divide** your click data by 2, then specify 1512×982.
+
+3. **Check the Predicted Coordinates**  
+   - If the model outputs x=4000 but your screen width is 1920, everything is out of range. Either scale the data or use a bigger screen dimension.
+
+4. **Example**: VB .NET Full‐Screen  
+   ```vbnet
+   ' In Form1.Designer.vb:
+   Me.FormBorderStyle = FormBorderStyle.None
+   Me.WindowState = FormWindowState.Maximized
+   Dim sw As Integer = Screen.PrimaryScreen.Bounds.Width
+   Dim sh As Integer = Screen.PrimaryScreen.Bounds.Height
+   Me.ClientSize = New Size(sw, sh)
+   ```
+   Then, when you capture clicks, they range from (0,0) to (sw, sh). Use those same values in your Python scripts.
+
+**Bottom line**: Your recorded `(screen_x, screen_y)` must match the **`--screen_width` and `--screen_height`** you use later. If they mismatch, you’ll see out‐of‐range or compressed heatmaps.
+
+---
+
+## 12. Troubleshooting
 
 - **Model Issues / DLC Not Detecting Landmarks Properly:**
   - Verify that your `config.yaml` is correct and your DLC project is fully trained.
 - **Mapping Accuracy Problems:**
   - Check that the data used to train your regression model covers a sufficient range of head poses and gaze positions.
   - Make sure your calibration data CSV is aligned: each row’s `(screen_x, screen_y)` truly corresponds to that row’s eye landmarks.
+  - **Confirm your screen dimension** is correct in both your click data and your final analysis script.
 - **Dependency Issues:**
   - Ensure all package versions match those listed in `requirements.txt`.
 - **TensorFlow or Keras Errors:**
@@ -277,7 +313,7 @@ For many use cases, **method #1** (retraining from scratch with combined data) i
 
 ---
 
-## 12. Future Improvements
+## 13. Future Improvements
 
 - **Enhanced Head–Pose Estimation:**
   - Refine the head pose calculations or incorporate more 3D facial landmarks to improve accuracy.
@@ -289,3 +325,5 @@ For many use cases, **method #1** (retraining from scratch with combined data) i
 ---
 
 **Happy tracking!**  
+
+Feel free to open an issue or submit a pull request if you have suggestions or encounter any problems.

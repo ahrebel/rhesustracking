@@ -2,6 +2,11 @@
 
 ![Animated Eyes](https://github.com/user-attachments/assets/0f245b14-ec20-4a11-868a-ae207a7dfa1d)
 
+** Please Note**
+This repository is not complete. The code is not finalized and will not work on your device. Please check back in two to three weeks for a final, working version of this code.
+
+---
+
 This repository implements an eye–tracking system for Rhesus macaques (and humans) using **DeepLabCut (DLC)**. The system detects eye landmarks from video frames, maps raw eye coordinates to screen positions (via a trained regression model), and analyzes gaze/fixation patterns during touchscreen interactions.
 
 > **Key Features:**
